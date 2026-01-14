@@ -1,4 +1,36 @@
-import { db, ref, set, onValue } from './firebase-config.js';
+import { db, ref, set, onValue, auth, provider, signInWithPopup, onAuthStateChanged, signOut } from './firebase-config.js';
+
+// 1. 監測登入狀態
+onAuthStateChanged(auth, (user) => {
+    const statusText = document.getElementById('auth-status');
+    const loginBtn = document.getElementById('login-trigger-btn');
+    
+    if (user) {
+        statusText.innerText = `管理員：${user.displayName} (${user.email})`;
+        loginBtn.innerText = "登出";
+        // 只有你的特定 Email 登入後才顯示重置按鈕 (雙重保障)
+        if(user.email === "caffcheung@gmail.com") {
+            document.getElementById('reset-data-btn').style.display = "block";
+        }
+    } else {
+        statusText.innerText = "訪客模式 (唯讀)";
+        loginBtn.innerText = "Google 登入";
+        document.getElementById('reset-data-btn').style.display = "none";
+    }
+    loadDay(currentDayIndex); 
+});
+
+// 2. 處理 Google 登入按鈕
+window.handleLoginSubmit = async () => {
+    try {
+        await signInWithPopup(auth, provider);
+        alert("登入成功！");
+        closeLoginModal(); // 關閉原本的彈窗
+    } catch (err) {
+        console.error(err);
+        alert("登入失敗：" + err.message);
+    }
+};
 
 // --- 1. 預設資料 (初始化或重置用) ---
 const defaultCoords = {
