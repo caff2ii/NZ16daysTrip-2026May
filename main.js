@@ -383,6 +383,7 @@ window.addEditRow = function() {
 }
 
 window.saveDayEdit = function() {
+    console.log("正在觸發儲存..."); // 測試有沒有按到按鈕
     const container = document.getElementById('edit-list-container');
     const rows = container.querySelectorAll('.edit-item-row');
     const newSchedule = [];
@@ -417,6 +418,7 @@ window.saveDayEdit = function() {
     
     // UI will update via onValue listener, but we switch off edit mode manually here to be snappy
     isEditingMode = false; 
+    alert("儲存成功！");
     // loadDay(currentDayIndex) will be called by onValue update
 }
 
@@ -582,6 +584,18 @@ function updateMapKeySelects() {
     });
     if(isEditingMode) window.updateRoutePreview();
 }
+
+// 2. 確保其他函數也被公開
+window.startEditMode = startEditMode;
+window.addEditRow = addEditRow;
+window.loadDay = loadDay;
+window.openLocManager = openLocManager;
+window.closeLocManager = closeLocManager;
+window.saveLocation = saveLocation;
+window.deleteLocation = deleteLocation;
+window.renderLocList = renderLocList;
+window.updateRoutePreview = updateRoutePreview;
+window.resetDataToDefault = resetDataToDefault;
 
 // 啟動 App
 init();
