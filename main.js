@@ -2,19 +2,14 @@ import { db, ref, set, onValue, auth, provider, signInWithRedirect, getRedirectR
 
 // --- 完整管理員權限控制邏輯 ---
 
-// 新增：處理 Redirect 回來的結果
-getRedirectResult(auth)
-  .then((result) => {
-    if (result?.user) {
-      console.log("Redirect 登入成功:", result.user.uid);
+// 處理 Redirect 跳轉回來的結果 (這能解決跳回後變訪客的問題)
+getRedirectResult(auth).then((result) => {
+    if (result && result.user) {
+        console.log("Redirect 成功，用戶已登入:", result.user.displayName);
     }
-  })
-  .catch((error) => {
-    console.error("Redirect 登入出錯:", error.code, error.message);
-    if (error.code === 'auth/unauthorized-domain') {
-        alert("錯誤：此網域未經授權，請檢查 Firebase Console 的 Authorized domains");
-    }
-  });
+}).catch((error) => {
+    console.error("Redirect 出錯:", error.message);
+});
 
 onAuthStateChanged(auth, (user) => {
     // 1. 設定你的專屬 UID (絕對不要改錯，否則連你也進不去)
