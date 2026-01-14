@@ -527,10 +527,14 @@ function generateEditRow(item, idx) {
             
             <div class="input-group">
                 <input type="text" name="hours" value="${item.hours || ''}" placeholder="開放時間" class="input-full">
-                <div style="flex: 1; display: flex; align-items: center; background: #fff3e0; padding: 0 8px; border-radius: 4px; border: 1px solid #ffcc80;">
-                    <span style="font-size: 11px; color: #e65100; white-space: nowrap;">⏳ 停留</span>
-                    <input type="number" name="stayMinutes" value="${item.stayMinutes || 60}" step="10" style="width: 100%; border: none; background: transparent; text-align: center; font-weight: bold; color: #e65100;">
-                    <span style="font-size: 11px; color: #e65100;">分</span>
+                <div style="flex: 1; display: flex; align-items: center; background: #fff3e0; padding: 5px 10px; border-radius: 6px; border: 1px solid #ffcc80; min-width: 120px;">
+                    <span style="font-size: 13px; color: #e65100; white-space: nowrap; margin-right: 5px;">⏳ 停留</span>
+                    <input type="number" 
+                           name="stayMinutes" 
+                           value="${item.stayMinutes || 60}" 
+                           step="10" 
+                           style="width: 50px; border: 1px solid #ffcc80; background: white; text-align: center; font-weight: bold; color: #e65100; font-size: 14px; border-radius: 4px; padding: 2px 0;">
+                    <span style="font-size: 13px; color: #e65100; margin-left: 5px;">分</span>
                 </div>
             </div>
 
