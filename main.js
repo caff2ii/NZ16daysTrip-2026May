@@ -377,6 +377,11 @@ function renderViewMode() {
                     <a href="${mapUrl}" target="_blank" style="text-decoration: none; color: #3498db; font-size: 12px; display: flex; align-items: center; gap: 4px;">
                         📍 在 Google Map 查看
                     </a>
+                    ${item.link ? `
+                        <a href="${item.link}" target="_blank" style="text-decoration: none; color: #e67e22; font-size: 12px; display: flex; align-items: center; gap: 4px; border-left: 1px solid #ddd; padding-left: 15px;">
+                            🔗 相關連結 / 預訂
+                        </a>
+                    ` : ''}
                 </div>
             </div>
         `;
@@ -546,6 +551,13 @@ function generateEditRow(item, idx) {
                 <input type="text" name="drive" class="drive-input" value="${item.drive || ''}" placeholder="自動計算" style="flex:1; border: 1px dashed #3498db; background: transparent;">
             </div>
 
+            <div style="margin-top: 5px; display: flex; align-items: center; gap: 8px; background: #fef5e7; padding: 5px 8px; border-radius: 4px; border: 1px solid #fad7a0;">
+                <span style="font-size: 12px; color: #d35400;">🔗 連結:</span>
+                <input type="url" name="link" value="${item.link || ''}" 
+                       placeholder="Booking.com / Airbnb / 餐廳預約網址" 
+                       style="flex: 1; font-size: 12px; padding: 4px; border: 1px solid #fad7a0; border-radius: 4px;">
+            </div>
+
             <div class="input-group" style="background:#eee; padding:5px; border-radius:4px;">
                 <span style="font-size:11px; align-self:center;">🗺️ 地圖定位:</span>
                 <select name="mapKey" class="input-full map-key-select" onchange="window.updateRoutePreview()">
@@ -574,7 +586,7 @@ function generateLocOptions(selectedKey) {
 }
 
 function addEditRow() {
-    const newItem = { time: "12:00", type: "visit", text: "", desc: "", mapKey: "", stayMinutes: 60 };
+    const newItem = { time: "12:00", type: "visit", text: "", desc: "", mapKey: "", stayMinutes: 60, link: "" };
     const container = document.getElementById('edit-list-container');
     const count = container.children.length;
     const tempDiv = document.createElement('div');
@@ -600,7 +612,8 @@ function saveDayEdit() {
             hours: row.querySelector('[name="hours"]').value,
             drive: row.querySelector('[name="drive"]').value,
             stayMinutes: parseInt(row.querySelector('[name="stayMinutes"]').value) || 0,
-            mapKey: mapKey
+            mapKey: mapKey,
+            link: row.querySelector('[name="link"]').value
         });
 
         if(mapKey) newRoute.push(mapKey);
