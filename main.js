@@ -177,15 +177,11 @@ function init() {
 
         renderNav();
         // 如果正在編輯模式，不要強制重刷避免輸入中斷，除非是外部更新
-        // --- 修改這裡的邏輯 ---
         if (!isEditingMode) {
             // 正常狀態：直接載入當天介面
             loadDay(currentDayIndex);
         } else {
-            // 編輯模式中：
-            // 我們檢查目前的 HTML 裡面是否還存在「儲存按鈕」
-            // 如果儲存後 Firebase 更新了，但我們發現 DOM 已經被 saveDayEdit 手動重刷過
-            // 或者我們想確保萬無一失，這裡可以不做事，讓 saveDayEdit 負責跳轉
+            // 編輯模式中：只更新下拉選單
             updateMapKeySelects(); 
         }
     });
@@ -201,7 +197,7 @@ function saveToFirebase() {
 }
 
 // 暴露給 window 的重置功能
-window.resetDataToDefault = function() {
+function resetDataToDefault() {
     if(confirm("確定要重置所有行程回到預設值嗎？資料庫將被覆寫。")) {
         itineraryData = JSON.parse(JSON.stringify(defaultItinerary));
         coords = JSON.parse(JSON.stringify(defaultCoords));
@@ -228,7 +224,7 @@ function renderNav() {
     if(btns[currentDayIndex]) btns[currentDayIndex].classList.add('active');
 }
 
-window.loadDay = function(index) {
+function loadDay(index) {
     currentDayIndex = index;
     isEditingMode = false;
     
@@ -288,7 +284,7 @@ function renderViewMode() {
 
 // --- 6. 編輯模式 ---
 
-window.startEditMode = function() {
+function startEditMode() {
     isEditingMode = true;
     const data = itineraryData[currentDayIndex];
     const contentDiv = document.getElementById('itinerary-content');
@@ -377,7 +373,7 @@ function generateLocOptions(selectedKey) {
     return options;
 }
 
-window.addEditRow = function() {
+function addEditRow() {
     const newItem = { time: "12:00", type: "visit", text: "", desc: "", mapKey: "" };
     const container = document.getElementById('edit-list-container');
     const count = container.children.length;
@@ -387,8 +383,8 @@ window.addEditRow = function() {
     enableDragAndDrop();
 }
 
-window.saveDayEdit = function() {
-    console.log("正在觸發儲存..."); // 測試有沒有按到按鈕
+function saveDayEdit() {
+    console.log("正在觸發儲存..."); 
     const container = document.getElementById('edit-list-container');
     const rows = container.querySelectorAll('.edit-item-row');
     const newSchedule = [];
@@ -411,24 +407,23 @@ window.saveDayEdit = function() {
     
     newSchedule.sort((a,b) => a.time.localeCompare(b.time));
 
-    isEditingMode = false;
-
-    // Update Local State
+    // Update Local State FIRST
     itineraryData[currentDayIndex].title = document.getElementById('edit-day-title').value;
     itineraryData[currentDayIndex].prevStay = document.getElementById('edit-prev-stay').value;
     itineraryData[currentDayIndex].stay = document.getElementById('edit-stay').value;
     itineraryData[currentDayIndex].schedule = newSchedule;
     itineraryData[currentDayIndex].route = newRoute;
 
-    renderViewMode(); 
-    updateMapWithRouting(newRoute, itineraryData[currentDayIndex].color);
+    // Reset Editing Mode Flag
+    isEditingMode = false;
 
-    // Save to Firebase
+    // Save to Firebase (async)
     saveToFirebase();
+
+    // FORCE LOAD DAY IMMEDIATELY - THIS FIXES THE UI LAG
+    loadDay(currentDayIndex);
     
-    // UI will update via onValue listener, but we switch off edit mode manually here to be snappy
     console.log("儲存程序完成");
-    // loadDay(currentDayIndex) will be called by onValue update
 }
 
 // --- 7. 拖曳排序 (Drag & Drop) ---
@@ -457,7 +452,7 @@ function handleDrop(e) {
 }
 function handleDragEnd() { this.style.opacity = '1'; }
 
-window.updateRoutePreview = function() {
+function updateRoutePreview() {
     const rows = document.querySelectorAll('.edit-item-row');
     const tempRoute = [];
     rows.forEach(row => {
@@ -508,7 +503,7 @@ async function updateMapWithRouting(routeKeys, color) {
 }
 
 // --- 9. 座標管理員 ---
-window.openLocManager = function() {
+function openLocManager() {
     document.getElementById('loc-modal').style.display = 'flex';
     window.renderLocList();
     document.getElementById('loc-key').value = '';
@@ -517,9 +512,9 @@ window.openLocManager = function() {
     document.getElementById('loc-lat').value = '';
     document.getElementById('loc-lng').value = '';
 }
-window.closeLocManager = function() { document.getElementById('loc-modal').style.display = 'none'; }
+function closeLocManager() { document.getElementById('loc-modal').style.display = 'none'; }
 
-window.renderLocList = function() {
+function renderLocList() {
     const container = document.getElementById('loc-list-container');
     const filter = document.getElementById('loc-search').value.toLowerCase();
     container.innerHTML = '';
@@ -544,7 +539,7 @@ window.renderLocList = function() {
     });
 }
 
-window.editLocation = function(key) {
+function editLocation(key) {
     document.getElementById('loc-key').value = key;
     document.getElementById('loc-key').disabled = true; 
     document.getElementById('loc-name').value = coordNames[key] || '';
@@ -553,7 +548,7 @@ window.editLocation = function(key) {
     document.querySelector('.modal-content').scrollTop = 0;
 }
 
-window.saveLocation = function() {
+function saveLocation() {
     const key = document.getElementById('loc-key').value.trim();
     const name = document.getElementById('loc-name').value.trim();
     const lat = parseFloat(document.getElementById('loc-lat').value);
@@ -575,7 +570,7 @@ window.saveLocation = function() {
     updateMapKeySelects();
 }
 
-window.deleteLocation = function(key) {
+function deleteLocation(key) {
     if (confirm(`確定要刪除 ${key} 嗎?`)) {
         delete coords[key];
         delete coordNames[key];
@@ -585,16 +580,8 @@ window.deleteLocation = function(key) {
     }
 }
 
-function updateMapKeySelects() {
-    const selects = document.querySelectorAll('.map-key-select');
-    selects.forEach(select => {
-        const currentVal = select.value;
-        select.innerHTML = generateLocOptions(currentVal);
-    });
-    if(isEditingMode) window.updateRoutePreview();
-}
-
-// 2. 確保其他函數也被公開
+// 10. Global Function Exposures
+window.saveDayEdit = saveDayEdit;
 window.startEditMode = startEditMode;
 window.addEditRow = addEditRow;
 window.loadDay = loadDay;
@@ -605,6 +592,7 @@ window.deleteLocation = deleteLocation;
 window.renderLocList = renderLocList;
 window.updateRoutePreview = updateRoutePreview;
 window.resetDataToDefault = resetDataToDefault;
+window.editLocation = editLocation;
 
 // 啟動 App
 init();
