@@ -23,6 +23,26 @@ body { font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; display: 
 .day-header { background: #ecf0f1; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 5px solid #1abc9c; }
 .stay-info { font-size: 13px; color: #555; margin: 5px 0; display: flex; align-items: center; }
 .stay-info i { margin-right: 5px; width: 15px; text-align: center; }
+.stay-badge {
+    background: #fef5e7;
+    color: #d35400;
+    border: 1px solid #fad7a0;
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 8px;
+    font-weight: 500;
+}
+.drive-info {
+    margin-top: 10px;
+    padding: 6px 12px;
+    background: #fdf2e9; /* 淺橘色背景 */
+    color: #e67e22; /* 橘色文字，呼應 .drive 的 f39c12 */
+    border-radius: 8px;
+    font-size: 12px;
+    display: inline-block;
+    border: 1px solid #fad7a0;
+}
 
 /* Timeline */
 .timeline-item { position: relative; padding-left: 25px; border-left: 2px solid #e0e0e0; margin-bottom: 20px; padding-bottom: 5px; }
