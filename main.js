@@ -383,36 +383,60 @@ async function getDriveInfo(startCoords, endCoords) {
 
 window.autoFillTraffic = async function() {
     const rows = document.querySelectorAll('.edit-item-row');
-    if (rows.length < 2) return alert("至少需要兩個地點才能計算路程");
+    if (rows.length < 2) return;
 
-    const btn = event.target;
-    btn.innerText = "🚗 計算中...";
-    
-    // 注意：我們循環到倒數第二個 (rows.length - 1)
-    // 因為最後一個地點沒有「下一段」路程
-    for (let i = 0; i < rows.length - 1; i++) {
-        const startKey = rows[i].querySelector('select[name="mapKey"]').value;
-        const endKey = rows[i+1].querySelector('select[name="mapKey"]').value;
+    const btn = event.currentTarget;
+    const statusText = document.getElementById('sync-status');
+    btn.innerText = "⏳ 計算中...";
+    btn.disabled = true;
 
-        const startPos = coords[startKey];
-        const endPos = coords[endKey];
+    try {
+        for (let i = 0; i < rows.length - 1; i++) {
+            const startKey = rows[i].querySelector('select[name="mapKey"]').value;
+            const endKey = rows[i+1].querySelector('select[name="mapKey"]').value;
+            const startPos = coords[startKey];
+            const endPos = coords[endKey];
 
-        if (startPos && endPos && startKey !== 'none' && endKey !== 'none') {
-            const info = await getDriveInfo(startPos, endPos);
-            if (info) {
-                // 將結果填入當前第 i 行的 drive-input
-                const driveInput = rows[i].querySelector('.drive-input');
-                driveInput.value = `${info.minutes} min (${info.km} km)`;
+            if (startPos && endPos && startKey !== 'none' && endKey !== 'none') {
+                const info = await getDriveInfo(startPos, endPos);
+                if (info) {
+                    // 1. 更新駕駛時間文字
+                    rows[i].querySelector('.drive-input').value = `${info.minutes} min (${info.km} km)`;
+
+                    // 2. 計算時間連動
+                    const currentTimeStr = rows[i].querySelector('input[name="time"]').value;
+                    const stayMin = parseInt(rows[i].querySelector('input[name="stayMinutes"]').value) || 0;
+                    
+                    if (currentTimeStr) {
+                        const totalGap = stayMin + info.minutes;
+                        const nextTime = addMinutesToTime(currentTimeStr, totalGap);
+                        rows[i+1].querySelector('input[name="time"]').value = nextTime;
+                    }
+                }
             }
         }
+        statusText.innerText = "✅ 已更新全天車程與時間";
+        statusText.style.opacity = "1";
+        setTimeout(() => statusText.style.opacity = "0", 3000);
+    } catch (err) {
+        statusText.innerText = "❌ 計算出錯";
+        statusText.style.opacity = "1";
+    } finally {
+        btn.innerText = "🚗 自動計算車程";
+        btn.disabled = false;
     }
-    
-    // 最後一行的駕駛時間清空，因為沒有下一站
-    rows[rows.length - 1].querySelector('.drive-input').value = "";
-    
-    btn.innerText = "🚗 自動計算車程";
-    alert("車程已更新至各站的出發備註中！");
 };
+
+// 輔助函數：時間加法
+function addMinutesToTime(timeStr, minutesToAdd) {
+    const [hours, mins] = timeStr.split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours);
+    date.setMinutes(mins + minutesToAdd);
+    const h = String(date.getHours()).padStart(2, '0');
+    const m = String(date.getMinutes()).padStart(2, '0');
+    return `${h}:${m}`;
+}
 
 // --- 6. 編輯模式 ---
 
@@ -429,6 +453,7 @@ function startEditMode() {
 
         <div style="margin: 10px 0; display: flex; gap: 10px;">
             <button class="btn-main" onclick="window.autoFillTraffic()">🚗 自動計算車程</button>
+            <span id="sync-status" style="font-size: 12px; color: #27ae60; font-weight: bold; opacity: 0; transition: opacity 0.5s;"></span>
         </div>
 
         <div style="background:#f9f9f9; padding:10px; border-radius:5px; margin-bottom:15px;">
@@ -479,7 +504,16 @@ function generateEditRow(item, idx) {
             
             <div class="input-group">
                 <input type="text" name="hours" value="${item.hours || ''}" placeholder="開放時間" class="input-full">
-                <input type="text" name="drive" class="drive-input" value="${item.drive || ''}" placeholder="駕駛時間 (自動計算)" class="input-full">
+                <div style="flex: 1; display: flex; align-items: center; background: #fff3e0; padding: 0 8px; border-radius: 4px; border: 1px solid #ffcc80;">
+                    <span style="font-size: 11px; color: #e65100; white-space: nowrap;">⏳ 停留</span>
+                    <input type="number" name="stayMinutes" value="${item.stayMinutes || 60}" step="10" style="width: 100%; border: none; background: transparent; text-align: center; font-weight: bold; color: #e65100;">
+                    <span style="font-size: 11px; color: #e65100;">分</span>
+                </div>
+            </div>
+
+            <div style="background: #f0f7ff; padding: 8px; border-radius: 4px; margin-top: 5px; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 12px; color: #2980b9;">🚗 下段路程:</span>
+                <input type="text" name="drive" class="drive-input" value="${item.drive || ''}" placeholder="自動計算" style="flex:1; border: 1px dashed #3498db; background: transparent;">
             </div>
 
             <div class="input-group" style="background:#eee; padding:5px; border-radius:4px;">
@@ -510,7 +544,7 @@ function generateLocOptions(selectedKey) {
 }
 
 function addEditRow() {
-    const newItem = { time: "12:00", type: "visit", text: "", desc: "", mapKey: "" };
+    const newItem = { time: "12:00", type: "visit", text: "", desc: "", mapKey: "", stayMinutes: 60 };
     const container = document.getElementById('edit-list-container');
     const count = container.children.length;
     const tempDiv = document.createElement('div');
@@ -535,6 +569,7 @@ function saveDayEdit() {
             desc: row.querySelector('[name="desc"]').value,
             hours: row.querySelector('[name="hours"]').value,
             drive: row.querySelector('[name="drive"]').value,
+            stayMinutes: parseInt(row.querySelector('[name="stayMinutes"]').value) || 0,
             mapKey: mapKey
         });
 
