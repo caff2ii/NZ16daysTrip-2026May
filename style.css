@@ -74,3 +74,23 @@ textarea.input-full { resize: vertical; min-height: 50px; font-family: inherit; 
     #map { height: 50%; }
     .nav-buttons { overflow-x: auto; justify-content: start; }
 }
+
+/* 重置數據按鈕 - 迷你低調版 */
+#reset-data-btn {
+    display: none; /* 預設隱藏，JS 判斷後顯示 */
+    margin: 20px auto;
+    padding: 5px 15px;
+    background-color: #ecf0f1; /* 淺灰色背景 */
+    color: #95a5a6;           /* 灰色文字 */
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    font-size: 11px;          /* 字體縮小 */
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+#reset-data-btn:hover {
+    background-color: #e74c3c; /* 移上去才變紅色 */
+    color: white;
+    border-color: #c0392b;
+}
