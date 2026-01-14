@@ -1,4 +1,4 @@
-import { db, ref, set, onValue, auth, provider, signInWithPopup, onAuthStateChanged, signOut } from './firebase-config.js';
+import { db, ref, set, onValue, auth, provider, signInWithRedirect, getRedirectResult, signInWithPopup, onAuthStateChanged, signOut } from './firebase-config.js';
 
 // --- 登入邏輯控制 ---
 
@@ -9,17 +9,29 @@ onAuthStateChanged(auth, (user) => {
     const resetBtn = document.getElementById('reset-data-btn');
 
     if (user) {
-        statusText.innerText = `管理員：${user.displayName}`;
-        loginBtn.innerText = "登出";
-        // 如果是你的 Email 才顯示重置按鈕 (請改為你的 Email)
-        if(user.email === "caffcheung@gmail.com" && resetBtn) resetBtn.style.display = "block";
+        console.log("登入成功，UID:", user.uid); // 這裡可以看到你的 UID，記得複製去 Rules
+        if(statusText) statusText.innerText = `管理員：${user.displayName || user.email}`;
+        if(loginBtn) loginBtn.innerText = "登出管理員";
+        
+        // 只有你的 Email 才顯示重置按鈕
+        if(user.email === "caffcheung@gmail.com" && resetBtn) {
+            resetBtn.style.display = "block";
+        }
+        
+        // 登入後自動關閉 Modal (如果有開著的話)
+        const modal = document.getElementById('login-modal');
+        if (modal) modal.style.display = 'none';
+        
     } else {
-        statusText.innerText = "訪客模式 (唯讀)";
-        loginBtn.innerText = "管理員登入";
+        if(statusText) statusText.innerText = "訪客模式 (唯讀)";
+        if(loginBtn) loginBtn.innerText = "管理員登入";
         if(resetBtn) resetBtn.style.display = "none";
     }
-    // 狀態改變時，必須重刷當前天數以顯示/隱藏編輯按鈕
-    if (typeof loadDay === 'function') loadDay(currentDayIndex); 
+
+    // 重新渲染當前頁面，讓「編輯」按鈕根據 auth.currentUser 決定是否出現
+    if (typeof loadDay === 'function') {
+        loadDay(currentDayIndex);
+    }
 });
 
 // --- 1. 預設資料 (初始化或重置用) ---
@@ -605,11 +617,21 @@ function deleteLocation(key) {
     }
 }
 
-// 強制掛載到 window，確保 HTML onclick 絕對讀得到
+// login
+window.handleLoginSubmit = async function() {
+    try {
+        console.log("正導向至 Google 登入...");
+        // 解決 Cross-Origin-Opener-Policy 的最佳方案
+        await signInWithRedirect(auth, provider);
+    } catch (err) {
+        console.error("登入出錯:", err);
+        alert("登入失敗：" + err.message);
+    }
+};
+
 window.openLoginModal = function() {
-    console.log("觸發 openLoginModal");
     if (auth.currentUser) {
-        if(confirm("確定要登出？")) {
+        if(confirm("確定要登出管理員模式嗎？")) {
             signOut(auth).then(() => {
                 alert("已登出");
                 location.reload(); 
@@ -618,25 +640,11 @@ window.openLoginModal = function() {
     } else {
         const modal = document.getElementById('login-modal');
         if (modal) modal.style.display = 'flex';
-        else alert("找不到登入視窗 HTML (login-modal)");
     }
 };
 
 window.closeLoginModal = function() {
     document.getElementById('login-modal').style.display = 'none';
-};
-
-window.handleLoginSubmit = async function() {
-    try {
-        console.log("開始 Google 登入程序...");
-        const result = await signInWithPopup(auth, provider);
-        console.log("登入成功:", result.user);
-        alert("登入成功！歡迎 " + result.user.displayName);
-        window.closeLoginModal();
-    } catch (err) {
-        console.error("登入出錯:", err);
-        alert("登入失敗：" + err.message);
-    }
 };
 
 // 10. Global Function Exposures
