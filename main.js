@@ -338,21 +338,33 @@ function renderViewMode() {
         const typeClass = item.type === 'drive' ? 'drive' : (item.type === 'hotel' ? 'hotel' : '');
         const mapQuery = encodeURIComponent(item.text + " New Zealand");
         const mapUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+
+        // --- 停留時間顯示邏輯 ---
+        const stayHtml = item.stayMinutes ? 
+            `<span class="stay-badge">⏳ ${item.stayMinutes} min</span>` : '';
         
         html += `
             <div class="timeline-item ${typeClass}">
                 <div class="item-header">
-                    <div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
                         <span class="time-badge">${item.time}</span>
-                        ${item.type === 'drive' ? '<span style="font-size:18px;">🚗</span>' : ''}
+                        ${stayHtml} ${item.type === 'drive' ? '<span style="font-size:18px;">🚗</span>' : ''}
                         ${item.type === 'hotel' ? '<span style="font-size:18px;">🛏️</span>' : ''}
                     </div>
                 </div>
                 <div class="item-title">${item.text}</div>
                 <div class="item-meta">${item.hours ? `🕒 開放時間: ${item.hours}` : ''}</div>
                 <div class="item-desc">${item.desc ? item.desc.replace(/\n/g, '<br>') : ''}</div>
-                ${item.drive ? `<div class="drive-info">🚗 駕駛時間: ${item.drive}</div>` : ''}
-                <div class="links-row"><a href="${mapUrl}" target="_blank">📍 Google Map</a></div>
+
+                ${item.drive ? `
+                    <div class="drive-info" style="margin-top:8px; padding:6px 12px; background:#f0f7ff; color:#2980b9; border-radius:15px; font-size:12px; display:inline-block; border:1px solid #d0e4f5;">
+                        🚗 預計下段車程: <b>${item.drive}</b>
+                    </div>
+                ` : ''}
+                
+               <div class="links-row" style="margin-top:10px;">
+                    <a href="${mapUrl}" target="_blank" style="text-decoration:none; color:#3498db; font-size:13px;">📍 Google Map</a>
+                </div>
             </div>
         `;
     });
