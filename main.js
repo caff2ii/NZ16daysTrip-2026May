@@ -345,25 +345,36 @@ function renderViewMode() {
         
         html += `
             <div class="timeline-item ${typeClass}">
-                <div class="item-header">
-                    <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="item-header" style="display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center;">
                         <span class="time-badge">${item.time}</span>
-                        ${stayHtml} ${item.type === 'drive' ? '<span style="font-size:18px;">🚗</span>' : ''}
-                        ${item.type === 'hotel' ? '<span style="font-size:18px;">🛏️</span>' : ''}
+                        ${stayHtml}
+                    </div>
+                    <div style="font-size: 18px;">
+                        ${item.type === 'drive' ? '🚗' : ''}
+                        ${item.type === 'hotel' ? '🛏️' : ''}
                     </div>
                 </div>
-                <div class="item-title">${item.text}</div>
-                <div class="item-meta">${item.hours ? `🕒 開放時間: ${item.hours}` : ''}</div>
-                <div class="item-desc">${item.desc ? item.desc.replace(/\n/g, '<br>') : ''}</div>
-
+                <div class="item-title" style="font-weight: bold; margin-top: 5px; font-size: 1.1em;">${item.text}</div>
+            
+                <div class="item-meta" style="color: #7f8c8d; font-size: 12px; margin-top: 3px;">
+                    ${item.hours ? `🕒 開放時間: ${item.hours}` : ''}
+                </div>
+    
+                <div class="item-desc" style="margin-top: 8px; font-size: 14px; line-height: 1.5; color: #34495e;">
+                    ${item.desc ? item.desc.replace(/\n/g, '<br>') : ''}
+                </div>
+    
                 ${item.drive ? `
-                    <div class="drive-info" style="margin-top:8px; padding:6px 12px; background:#f0f7ff; color:#2980b9; border-radius:15px; font-size:12px; display:inline-block; border:1px solid #d0e4f5;">
-                        🚗 預計下段車程: <b>${item.drive}</b>
+                    <div class="drive-info">
+                        🚗 <b>下段路程:</b> ${item.drive}
                     </div>
                 ` : ''}
-                
-               <div class="links-row" style="margin-top:10px;">
-                    <a href="${mapUrl}" target="_blank" style="text-decoration:none; color:#3498db; font-size:13px;">📍 Google Map</a>
+    
+                <div class="links-row" style="margin-top: 12px; border-top: 1px dashed #eee; padding-top: 8px;">
+                    <a href="${mapUrl}" target="_blank" style="text-decoration: none; color: #3498db; font-size: 12px; display: flex; align-items: center; gap: 4px;">
+                        📍 在 Google Map 查看
+                    </a>
                 </div>
             </div>
         `;
