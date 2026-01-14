@@ -360,6 +360,59 @@ function renderViewMode() {
     contentDiv.innerHTML = html;
 }
 
+// 計算兩點之間的車程（回傳分鐘與公里）
+async function getDriveInfo(startCoords, endCoords) {
+    // OSRM 格式是 lng,lat;lng,lat (經度在前)
+    // 注意：你的 coords 格式如果是 [lat, lng]，這裡要反轉
+    const url = `https://router.project-osrm.org/route/v1/driving/${startCoords[1]},${startCoords[0]};${endCoords[1]},${endCoords[0]}?overview=false`;
+    
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.code === 'Ok' && data.routes.length > 0) {
+            return {
+                minutes: Math.round(data.routes[0].duration / 60),
+                km: (data.routes[0].distance / 1000).toFixed(1)
+            };
+        }
+    } catch (e) {
+        console.error("OSRM 計算出錯:", e);
+    }
+    return null;
+}
+
+window.autoFillTraffic = async function() {
+    const rows = document.querySelectorAll('.edit-item-row');
+    if (rows.length < 2) return alert("至少需要兩個地點才能計算路程");
+
+    // 顯示 Loading 狀態
+    const btn = event.target;
+    btn.innerText = "🚗 計算中...";
+    
+    // 循環處理，從第 2 個項目開始算它跟第 1 個項目的距離
+    for (let i = 1; i < rows.length; i++) {
+        const prevKey = rows[i-1].querySelector('select[name="mapKey"]').value;
+        const currKey = rows[i].querySelector('select[name="mapKey"]').value;
+
+        // coords 是你全域存儲的座標物件，如 { chc_airport: [-43.4, 172.5] }
+        const startPos = coords[prevKey];
+        const endPos = coords[currKey];
+
+        // 只有兩站都有座標且 Key 不是 "none" 時才計算
+        if (startPos && endPos && prevKey !== 'none' && currKey !== 'none') {
+            const info = await getDriveInfo(startPos, endPos); // 這是之前寫的 fetch OSRM 函數
+            if (info) {
+                const driveInput = rows[i].querySelector('.drive-input');
+                // 填入格式：約 1h 20m (85km)
+                driveInput.value = `${info.minutes}min (${info.km}km)`;
+            }
+        }
+    }
+    
+    btn.innerText = "🚗 自動計算車程";
+    alert("計算完成！");
+};
+
 // --- 6. 編輯模式 ---
 
 function startEditMode() {
@@ -371,6 +424,11 @@ function startEditMode() {
         <div class="edit-controls">
             <button class="btn-main btn-cancel" onclick="window.loadDay(${currentDayIndex})">取消</button>
             <button class="btn-main btn-save" onclick="window.saveDayEdit()">💾 儲存所有變更</button>
+        </div>
+
+        <div style="margin: 10px 0; display: flex; gap: 10px;">
+            <button class="btn-main" onclick="window.autoFillTraffic()">🚗 自動計算車程</button>
+            <button class="btn-main" onclick="window.addScheduleItem()">➕ 增加項目</button>
         </div>
 
         <div style="background:#f9f9f9; padding:10px; border-radius:5px; margin-bottom:15px;">
@@ -421,7 +479,7 @@ function generateEditRow(item, idx) {
             
             <div class="input-group">
                 <input type="text" name="hours" value="${item.hours || ''}" placeholder="開放時間" class="input-full">
-                <input type="text" name="drive" value="${item.drive || ''}" placeholder="駕駛時間 (選填)" class="input-full">
+                <input type="text" name="drive" class="drive-input" value="${item.drive || ''}" placeholder="駕駛時間 (自動計算)" class="input-full">
             </div>
 
             <div class="input-group" style="background:#eee; padding:5px; border-radius:4px;">
