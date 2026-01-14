@@ -353,6 +353,8 @@ function renderViewMode() {
                     <div style="font-size: 18px;">
                         ${item.type === 'drive' ? '🚗' : ''}
                         ${item.type === 'hotel' ? '🛏️' : ''}
+                        ${item.type === 'visit' ? '🏔️' : ''}
+                        ${item.type === 'food' ? '🍴' : ''}
                     </div>
                 </div>
                 <div class="item-title" style="font-weight: bold; margin-top: 5px; font-size: 1.1em;">${item.text}</div>
@@ -518,6 +520,7 @@ function generateEditRow(item, idx) {
                         <option value="visit" ${item.type==='visit'?'selected':''}>景點</option>
                         <option value="drive" ${item.type==='drive'?'selected':''}>開車</option>
                         <option value="hotel" ${item.type==='hotel'?'selected':''}>住宿</option>
+                        <option value="food" ${item.type==='food'?'selected':''}>餐廳</option>
                     </select>
                     <input type="text" name="text" value="${item.text}" class="input-full" placeholder="名稱">
                 </div>
