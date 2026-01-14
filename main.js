@@ -407,7 +407,7 @@ function generateEditRow(item, idx) {
             <div class="edit-row-header">
                 <span class="drag-handle">☰</span>
                 <div class="input-group" style="flex:1;">
-                    <input type="time" name="time" value="${item.time}" style="width:80px;">
+                    <input type="time" name="time" value="${item.time}" style="width:100px;">
                     <select name="type" style="width:70px;">
                         <option value="visit" ${item.type==='visit'?'selected':''}>景點</option>
                         <option value="drive" ${item.type==='drive'?'selected':''}>開車</option>
