@@ -4,31 +4,39 @@ import { db, ref, set, onValue, auth, provider, signInWithRedirect, getRedirectR
 
 // 監控登入狀態
 onAuthStateChanged(auth, (user) => {
+    // 你的專屬管理員 UID
+    const adminUID = "eECs2vvipQM0QZTP8UpTUk5Lq7o2"; 
+    
     const statusText = document.getElementById('auth-status');
     const loginBtn = document.getElementById('login-trigger-btn');
     const resetBtn = document.getElementById('reset-data-btn');
 
-    if (user) {
-        console.log("登入成功，UID:", user.uid); // 這裡可以看到你的 UID，記得複製去 Rules
-        if(statusText) statusText.innerText = `管理員：${user.displayName || user.email}`;
+    // 1. 檢查是否有用戶登入，且 UID 是否匹配
+    const isAdmin = user && user.uid === adminUID;
+
+    if (isAdmin) {
+        console.log("管理員已驗證登入");
+        if(statusText) statusText.innerText = `管理員模式：${user.displayName || '已開啟'}`;
         if(loginBtn) loginBtn.innerText = "登出管理員";
         
-        // 只有你的 Email 才顯示重置按鈕
-        if(user.email === "caffcheung@gmail.com" && resetBtn) {
-            resetBtn.style.display = "block";
-        }
+        // 只有匹配你的 UID 才顯示重置按鈕
+        if(resetBtn) resetBtn.style.display = "block";
         
-        // 登入後自動關閉 Modal (如果有開著的話)
+        // 登入後自動關閉 Modal
         const modal = document.getElementById('login-modal');
         if (modal) modal.style.display = 'none';
         
     } else {
+        // 如果有登入但 UID 不對，或是根本沒登入
         if(statusText) statusText.innerText = "訪客模式 (唯讀)";
         if(loginBtn) loginBtn.innerText = "管理員登入";
         if(resetBtn) resetBtn.style.display = "none";
+        
+        // 如果是登入了一個錯誤的帳號，可以考慮自動登出（選做）
+        // if (user) signOut(auth); 
     }
 
-    // 重新渲染當前頁面，讓「編輯」按鈕根據 auth.currentUser 決定是否出現
+    // 2. 重新渲染頁面，讓「編輯」按鈕根據 isAdmin 狀態出現或消失
     if (typeof loadDay === 'function') {
         loadDay(currentDayIndex);
     }
