@@ -177,11 +177,16 @@ function init() {
 
         renderNav();
         // 如果正在編輯模式，不要強制重刷避免輸入中斷，除非是外部更新
+        // --- 修改這裡的邏輯 ---
         if (!isEditingMode) {
+            // 正常狀態：直接載入當天介面
             loadDay(currentDayIndex);
         } else {
-             // 若是編輯模式下背景數據更新，通常需提示用戶或處理衝突，此處簡單處理：不做動作或更新下拉選單
-             updateMapKeySelects(); 
+            // 編輯模式中：
+            // 我們檢查目前的 HTML 裡面是否還存在「儲存按鈕」
+            // 如果儲存後 Firebase 更新了，但我們發現 DOM 已經被 saveDayEdit 手動重刷過
+            // 或者我們想確保萬無一失，這裡可以不做事，讓 saveDayEdit 負責跳轉
+            updateMapKeySelects(); 
         }
     });
 }
@@ -406,6 +411,8 @@ window.saveDayEdit = function() {
     
     newSchedule.sort((a,b) => a.time.localeCompare(b.time));
 
+    isEditingMode = false;
+
     // Update Local State
     itineraryData[currentDayIndex].title = document.getElementById('edit-day-title').value;
     itineraryData[currentDayIndex].prevStay = document.getElementById('edit-prev-stay').value;
@@ -413,12 +420,14 @@ window.saveDayEdit = function() {
     itineraryData[currentDayIndex].schedule = newSchedule;
     itineraryData[currentDayIndex].route = newRoute;
 
+    renderViewMode(); 
+    updateMapWithRouting(newRoute, itineraryData[currentDayIndex].color);
+
     // Save to Firebase
     saveToFirebase();
     
     // UI will update via onValue listener, but we switch off edit mode manually here to be snappy
-    isEditingMode = false; 
-    alert("儲存成功！");
+    console.log("儲存程序完成");
     // loadDay(currentDayIndex) will be called by onValue update
 }
 
