@@ -3,7 +3,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getDatabase, ref, set, onValue, push, remove, get } 
     from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 // 引入 Google Auth 工具
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // TODO: 請在這裡填入您的 Firebase Config
 const firebaseConfig = {
@@ -24,4 +24,12 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider(); // 初始化 Google 提供商
 
 // Export functions for use in main.js
-export { db, ref, set, onValue, auth, provider, signInWithPopup, onAuthStateChanged, signOut };
+export { 
+    db, ref, set, onValue, 
+    auth, provider, 
+    signInWithPopup, 
+    signInWithRedirect, 
+    getRedirectResult, 
+    onAuthStateChanged, 
+    signOut 
+};
