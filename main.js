@@ -330,6 +330,7 @@ function renderViewMode() {
             <h2 style="margin:5px 0 10px; color:#2c3e50;">Day ${data.day}: ${data.title}</h2>
             <div style="font-size:13px; margin-bottom:5px;">📅 ${data.date}</div>
             <div class="stay-info">🏨 今晚住宿: <b>${data.stay}</b></div>
+            ${editBtnHtml}
         </div>
     `;
     
