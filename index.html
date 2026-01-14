@@ -27,6 +27,7 @@
             <div id="itinerary-content">
                 <p style="padding:20px; text-align:center; color:#888;">正在連線至資料庫...</p>
             </div>
+            <button id="reset-data-btn" onclick="resetDataToDefault()">初始化數據 (僅管理員)</button>
         </div>
         <div id="map"></div>
     </div>
@@ -69,7 +70,6 @@
             <button onclick="closeLoginModal()" style="margin-top:15px; background:none; border:none; color:#666; cursor:pointer;">取消</button>
         </div>
     </div>
-    <button id="reset-data-btn" class="btn-main" onclick="resetDataToDefault()" style="display:none; background:#c0392b; margin: 20px;">⚠️ 重置資料庫為預設值</button>
 
      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
