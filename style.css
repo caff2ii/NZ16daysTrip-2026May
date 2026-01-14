@@ -75,22 +75,25 @@ textarea.input-full { resize: vertical; min-height: 50px; font-family: inherit; 
     .nav-buttons { overflow-x: auto; justify-content: start; }
 }
 
-/* 重置數據按鈕 - 迷你低調版 */
+/* 重置數據按鈕 - 窄版置中樣式 */
 #reset-data-btn {
-    display: none; /* 預設隱藏，JS 判斷後顯示 */
-    margin: 20px auto;
-    padding: 5px 15px;
-    background-color: #ecf0f1; /* 淺灰色背景 */
-    color: #95a5a6;           /* 灰色文字 */
-    border: 1px solid #bdc3c7;
-    border-radius: 4px;
-    font-size: 11px;          /* 字體縮小 */
+    display: none; /* 初始隱藏，由 JS 判斷顯示 */
+    width: auto;   /* 寬度隨文字長度 */
+    min-width: 120px; /* 設定最小寬度 */
+    margin: 30px auto; /* 上下留 30px 空間，auto 負責水平置中 */
+    padding: 6px 12px;
+    background-color: #f2f2f2; /* 極淺灰 */
+    color: #a0a0a0;           /* 灰色文字 */
+    border: 1px solid #ddd;
+    border-radius: 20px;      /* 圓角設計，看起來更精緻 */
+    font-size: 11px;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.2s ease;
+    text-align: center;
 }
 
 #reset-data-btn:hover {
-    background-color: #e74c3c; /* 移上去才變紅色 */
-    color: white;
-    border-color: #c0392b;
+    background-color: #ffeaea; /* 移上去變淺紅 */
+    color: #e74c3c;           /* 文字變紅 */
+    border-color: #fab1a0;
 }
