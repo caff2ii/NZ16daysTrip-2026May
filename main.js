@@ -22,28 +22,6 @@ onAuthStateChanged(auth, (user) => {
     if (typeof loadDay === 'function') loadDay(currentDayIndex); 
 });
 
-window.openLoginModal = () => {
-    if (auth.currentUser) {
-        if(confirm("確定要登出？")) signOut(auth);
-    } else {
-        document.getElementById('login-modal').style.display = 'flex';
-    }
-};
-
-window.closeLoginModal = () => {
-    document.getElementById('login-modal').style.display = 'none';
-};
-
-window.handleLoginSubmit = async () => {
-    try {
-        await signInWithPopup(auth, provider);
-        alert("登入成功！");
-        closeLoginModal();
-    } catch (err) {
-        alert("登入失敗：" + err.message);
-    }
-};
-
 // --- 1. 預設資料 (初始化或重置用) ---
 const defaultCoords = {
     chc_airport: [-43.4864, 172.5369],
@@ -627,19 +605,61 @@ function deleteLocation(key) {
     }
 }
 
+// 強制掛載到 window，確保 HTML onclick 絕對讀得到
+window.openLoginModal = function() {
+    console.log("觸發 openLoginModal");
+    if (auth.currentUser) {
+        if(confirm("確定要登出？")) {
+            signOut(auth).then(() => {
+                alert("已登出");
+                location.reload(); 
+            });
+        }
+    } else {
+        const modal = document.getElementById('login-modal');
+        if (modal) modal.style.display = 'flex';
+        else alert("找不到登入視窗 HTML (login-modal)");
+    }
+};
+
+window.closeLoginModal = function() {
+    document.getElementById('login-modal').style.display = 'none';
+};
+
+window.handleLoginSubmit = async function() {
+    try {
+        console.log("開始 Google 登入程序...");
+        const result = await signInWithPopup(auth, provider);
+        console.log("登入成功:", result.user);
+        alert("登入成功！歡迎 " + result.user.displayName);
+        window.closeLoginModal();
+    } catch (err) {
+        console.error("登入出錯:", err);
+        alert("登入失敗：" + err.message);
+    }
+};
+
 // 10. Global Function Exposures
+// 登入與權限控制 (新增)
+window.openLoginModal = openLoginModal;
+window.closeLoginModal = closeLoginModal;
+window.handleLoginSubmit = handleLoginSubmit;
+
+// 原有的行程編輯功能
 window.saveDayEdit = saveDayEdit;
 window.startEditMode = startEditMode;
 window.addEditRow = addEditRow;
 window.loadDay = loadDay;
+window.resetDataToDefault = resetDataToDefault;
+
+// 地點管理功能
 window.openLocManager = openLocManager;
 window.closeLocManager = closeLocManager;
 window.saveLocation = saveLocation;
 window.deleteLocation = deleteLocation;
+window.editLocation = editLocation;
 window.renderLocList = renderLocList;
 window.updateRoutePreview = updateRoutePreview;
-window.resetDataToDefault = resetDataToDefault;
-window.editLocation = editLocation;
 
 // 啟動 App
 init();
