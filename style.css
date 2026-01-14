@@ -15,7 +15,7 @@ body { font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; display: 
 
 /* Layout */
 #main-container { display: flex; flex: 1; overflow: hidden; }
-#sidebar { width: 450px; background: white; overflow-y: auto; padding-bottom: 40px; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
+#sidebar { width: 500px; background: white; overflow-y: auto; padding-bottom: 40px; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
 #map { flex: 1; height: 100%; }
 
 /* Content */
