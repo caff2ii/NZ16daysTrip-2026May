@@ -1,42 +1,59 @@
 import { db, ref, set, onValue, auth, provider, signInWithRedirect, getRedirectResult, signInWithPopup, onAuthStateChanged, signOut } from './firebase-config.js';
 
-// --- 登入邏輯控制 ---
+// --- 完整管理員權限控制邏輯 ---
 
-// 監控登入狀態
 onAuthStateChanged(auth, (user) => {
-    // 你的專屬管理員 UID
+    // 1. 設定你的專屬 UID (絕對不要改錯，否則連你也進不去)
     const adminUID = "eECs2vvipQM0QZTP8UpTUk5Lq7o2"; 
     
+    // 2. 獲取頁面上的 UI 元素
     const statusText = document.getElementById('auth-status');
     const loginBtn = document.getElementById('login-trigger-btn');
     const resetBtn = document.getElementById('reset-data-btn');
+    const modal = document.getElementById('login-modal');
 
-    // 1. 檢查是否有用戶登入，且 UID 是否匹配
+    // 3. 判斷是否為管理員本人
     const isAdmin = user && user.uid === adminUID;
 
     if (isAdmin) {
-        console.log("管理員已驗證登入");
-        if(statusText) statusText.innerText = `管理員模式：${user.displayName || '已開啟'}`;
-        if(loginBtn) loginBtn.innerText = "登出管理員";
+        // --- 情況 A: 管理員本人登入成功 ---
+        console.log("✅ 管理員身份已確認 (UID 匹配)");
         
-        // 只有匹配你的 UID 才顯示重置按鈕
-        if(resetBtn) resetBtn.style.display = "block";
+        if (statusText) statusText.innerText = `管理員模式：${user.displayName || '已開啟'}`;
+        if (loginBtn) loginBtn.innerText = "登出管理員";
         
-        // 登入後自動關閉 Modal
-        const modal = document.getElementById('login-modal');
+        // 顯示只有管理員能用的功能 (例如重置按鈕)
+        if (resetBtn) resetBtn.style.display = "block";
+        
+        // 登入後自動關閉彈窗
         if (modal) modal.style.display = 'none';
         
-    } else {
-        // 如果有登入但 UID 不對，或是根本沒登入
-        if(statusText) statusText.innerText = "訪客模式 (唯讀)";
-        if(loginBtn) loginBtn.innerText = "管理員登入";
-        if(resetBtn) resetBtn.style.display = "none";
+    } else if (user) {
+        // --- 情況 B: 有人登入，但 UID 不對 (非法用戶) ---
+        console.warn("⚠️ 非授權用戶嘗試登入，UID:", user.uid);
         
-        // 如果是登入了一個錯誤的帳號，可以考慮自動登出（選做）
-        // if (user) signOut(auth); 
+        alert("此帳號未經授權，無法編輯此行程。");
+        
+        // 強制登出非管理員帳號，保持系統純淨
+        signOut(auth).then(() => {
+            if (statusText) statusText.innerText = "訪客模式 (唯讀)";
+            if (loginBtn) loginBtn.innerText = "管理員登入";
+            if (resetBtn) resetBtn.style.display = "none";
+            location.reload(); // 重新整理確保權限重置
+        });
+        
+    } else {
+        // --- 情況 C: 未登入狀態 (訪客) ---
+        console.log("ℹ️ 訪客模式");
+        
+        if (statusText) statusText.innerText = "訪客模式 (唯讀)";
+        if (loginBtn) loginBtn.innerText = "管理員登入";
+        if (resetBtn) resetBtn.style.display = "none";
     }
 
-    // 2. 重新渲染頁面，讓「編輯」按鈕根據 isAdmin 狀態出現或消失
+    // 4. 無論狀態如何，重新載入當前天數
+    // 這是為了讓 renderViewMode() 內的 if (auth.currentUser) 判斷生效
+    // 從而顯示或隱藏「編輯整日行程」的按鈕
     if (typeof loadDay === 'function') {
         loadDay(currentDayIndex);
     }
@@ -287,8 +304,14 @@ function renderViewMode() {
     if (!data) return;
     const contentDiv = document.getElementById('itinerary-content');
 
+    // 1. 定義你的專屬 UID
+    const adminUID = "eECs2vvipQM0QZTP8UpTUk5Lq7o2";
+
+    // 2. 嚴格檢查：必須登入 且 UID 必須是你本人
+    const isAdmin = auth.currentUser && auth.currentUser.uid === adminUID;
+    
     // 檢查是否登入，決定顯示編輯按鈕還是提示文字
-    const editBtnHtml = auth.currentUser ? 
+    const editBtnHtml = isAdmin ?
         `<button class="btn-main" onclick="window.startEditMode()" style="margin-top:10px; width:100%;">✏️ 編輯整日行程</button>` : 
         `<div style="text-align:center; color:#95a5a6; font-size:12px; padding:10px; background:#eee; border-radius:5px; margin-top:10px;">(唯讀模式，登入後可編輯)</div>`;
     
