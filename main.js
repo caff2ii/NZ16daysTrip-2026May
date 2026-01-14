@@ -1,33 +1,45 @@
 import { db, ref, set, onValue, auth, provider, signInWithPopup, onAuthStateChanged, signOut } from './firebase-config.js';
 
-// 1. 監測登入狀態
+// --- 登入邏輯控制 ---
+
+// 監控登入狀態
 onAuthStateChanged(auth, (user) => {
     const statusText = document.getElementById('auth-status');
     const loginBtn = document.getElementById('login-trigger-btn');
-    
+    const resetBtn = document.getElementById('reset-data-btn');
+
     if (user) {
-        statusText.innerText = `管理員：${user.displayName} (${user.email})`;
+        statusText.innerText = `管理員：${user.displayName}`;
         loginBtn.innerText = "登出";
-        // 只有你的特定 Email 登入後才顯示重置按鈕 (雙重保障)
-        if(user.email === "caffcheung@gmail.com") {
-            document.getElementById('reset-data-btn').style.display = "block";
-        }
+        // 如果是你的 Email 才顯示重置按鈕 (請改為你的 Email)
+        if(user.email === "caffcheung@gmail.com" && resetBtn) resetBtn.style.display = "block";
     } else {
         statusText.innerText = "訪客模式 (唯讀)";
-        loginBtn.innerText = "Google 登入";
-        document.getElementById('reset-data-btn').style.display = "none";
+        loginBtn.innerText = "管理員登入";
+        if(resetBtn) resetBtn.style.display = "none";
     }
-    loadDay(currentDayIndex); 
+    // 狀態改變時，必須重刷當前天數以顯示/隱藏編輯按鈕
+    if (typeof loadDay === 'function') loadDay(currentDayIndex); 
 });
 
-// 2. 處理 Google 登入按鈕
+window.openLoginModal = () => {
+    if (auth.currentUser) {
+        if(confirm("確定要登出？")) signOut(auth);
+    } else {
+        document.getElementById('login-modal').style.display = 'flex';
+    }
+};
+
+window.closeLoginModal = () => {
+    document.getElementById('login-modal').style.display = 'none';
+};
+
 window.handleLoginSubmit = async () => {
     try {
         await signInWithPopup(auth, provider);
         alert("登入成功！");
-        closeLoginModal(); // 關閉原本的彈窗
+        closeLoginModal();
     } catch (err) {
-        console.error(err);
         alert("登入失敗：" + err.message);
     }
 };
@@ -276,6 +288,11 @@ function renderViewMode() {
     const data = itineraryData[currentDayIndex];
     if (!data) return;
     const contentDiv = document.getElementById('itinerary-content');
+
+    // 檢查是否登入，決定顯示編輯按鈕還是提示文字
+    const editBtnHtml = auth.currentUser ? 
+        `<button class="btn-main" onclick="window.startEditMode()" style="margin-top:10px; width:100%;">✏️ 編輯整日行程</button>` : 
+        `<div style="text-align:center; color:#95a5a6; font-size:12px; padding:10px; background:#eee; border-radius:5px; margin-top:10px;">(唯讀模式，登入後可編輯)</div>`;
     
     let html = `
         <div class="day-header">
@@ -283,8 +300,6 @@ function renderViewMode() {
             <h2 style="margin:5px 0 10px; color:#2c3e50;">Day ${data.day}: ${data.title}</h2>
             <div style="font-size:13px; margin-bottom:5px;">📅 ${data.date}</div>
             <div class="stay-info">🏨 今晚住宿: <b>${data.stay}</b></div>
-            
-            <button class="btn-main" onclick="window.startEditMode()" style="margin-top:10px; width:100%;">✏️ 編輯整日行程</button>
         </div>
     `;
     
