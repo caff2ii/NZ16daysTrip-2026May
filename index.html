@@ -10,7 +10,10 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
+    <div id="admin-bar" style="background: #1a252f; color: white; padding: 5px 15px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+        <span id="auth-status">訪客模式 (唯讀)</span>
+        <button id="login-trigger-btn" onclick="openLoginModal()" style="background: #34495e; color: white; border: none; padding: 3px 10px; border-radius: 3px; cursor: pointer;">管理員登入</button>
+    </div>
     <div id="top-bar">
         <div class="header">
             <h1>紐西蘭南島 16天自駕遊 Kia Carnival</h1>
@@ -23,9 +26,6 @@
         <div id="sidebar">
             <div id="itinerary-content">
                 <p style="padding:20px; text-align:center; color:#888;">正在連線至資料庫...</p>
-            </div>
-            <div style="padding: 0 20px 20px;">
-                 <button onclick="window.resetDataToDefault()" style="font-size:11px; color:#aaa; border:none; background:none; cursor:pointer;">⚠️ 重置回預設值 (Reset DB)</button>
             </div>
         </div>
         <div id="map"></div>
@@ -62,5 +62,17 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <script type="module" src="main.js"></script>
+
+    <div id="login-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
+        <div style="background:white; padding:30px; border-radius:12px; width:280px; text-align:center;">
+            <h3 style="margin-bottom:20px; color: #2c3e50;">管理員權限</h3>
+            <button onclick="handleLoginSubmit()" style="background:#4285F4; color:white; border:none; padding:12px; width:100%; border-radius:4px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; font-family: sans-serif;">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" style="margin-right:10px;">
+                使用 Google 帳號登入
+            </button>
+            <button onclick="closeLoginModal()" style="margin-top:15px; background:none; border:none; color:#666; cursor:pointer;">取消</button>
+        </div>
+    </div>
+    <button id="reset-data-btn" class="btn-main" onclick="resetDataToDefault()" style="display:none; background:#c0392b; margin: 20px;">⚠️ 重置資料庫為預設值</button>
 </body>
 </html>
