@@ -117,3 +117,10 @@ textarea.input-full { resize: vertical; min-height: 50px; font-family: inherit; 
     color: #e74c3c;           /* 文字變紅 */
     border-color: #fab1a0;
 }
+
+/* 讓 number input 的箭頭稍微大一點，方便操作 */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    opacity: 1;
+    height: 24px;
+}
