@@ -385,32 +385,33 @@ window.autoFillTraffic = async function() {
     const rows = document.querySelectorAll('.edit-item-row');
     if (rows.length < 2) return alert("至少需要兩個地點才能計算路程");
 
-    // 顯示 Loading 狀態
     const btn = event.target;
     btn.innerText = "🚗 計算中...";
     
-    // 循環處理，從第 2 個項目開始算它跟第 1 個項目的距離
-    for (let i = 1; i < rows.length; i++) {
-        const prevKey = rows[i-1].querySelector('select[name="mapKey"]').value;
-        const currKey = rows[i].querySelector('select[name="mapKey"]').value;
+    // 注意：我們循環到倒數第二個 (rows.length - 1)
+    // 因為最後一個地點沒有「下一段」路程
+    for (let i = 0; i < rows.length - 1; i++) {
+        const startKey = rows[i].querySelector('select[name="mapKey"]').value;
+        const endKey = rows[i+1].querySelector('select[name="mapKey"]').value;
 
-        // coords 是你全域存儲的座標物件，如 { chc_airport: [-43.4, 172.5] }
-        const startPos = coords[prevKey];
-        const endPos = coords[currKey];
+        const startPos = coords[startKey];
+        const endPos = coords[endKey];
 
-        // 只有兩站都有座標且 Key 不是 "none" 時才計算
-        if (startPos && endPos && prevKey !== 'none' && currKey !== 'none') {
-            const info = await getDriveInfo(startPos, endPos); // 這是之前寫的 fetch OSRM 函數
+        if (startPos && endPos && startKey !== 'none' && endKey !== 'none') {
+            const info = await getDriveInfo(startPos, endPos);
             if (info) {
+                // 將結果填入當前第 i 行的 drive-input
                 const driveInput = rows[i].querySelector('.drive-input');
-                // 填入格式：約 1h 20m (85km)
-                driveInput.value = `${info.minutes}min (${info.km}km)`;
+                driveInput.value = `${info.minutes} min (${info.km} km)`;
             }
         }
     }
     
+    // 最後一行的駕駛時間清空，因為沒有下一站
+    rows[rows.length - 1].querySelector('.drive-input').value = "";
+    
     btn.innerText = "🚗 自動計算車程";
-    alert("計算完成！");
+    alert("車程已更新至各站的出發備註中！");
 };
 
 // --- 6. 編輯模式 ---
