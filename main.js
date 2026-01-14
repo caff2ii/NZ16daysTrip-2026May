@@ -429,7 +429,6 @@ function startEditMode() {
 
         <div style="margin: 10px 0; display: flex; gap: 10px;">
             <button class="btn-main" onclick="window.autoFillTraffic()">🚗 自動計算車程</button>
-            <button class="btn-main" onclick="window.addScheduleItem()">➕ 增加項目</button>
         </div>
 
         <div style="background:#f9f9f9; padding:10px; border-radius:5px; margin-bottom:15px;">
