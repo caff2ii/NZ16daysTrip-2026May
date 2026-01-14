@@ -659,14 +659,6 @@ function deleteLocation(key) {
 
 // login
 window.handleLoginSubmit = async function() {
-    /*try {
-        console.log("正導向至 Google 登入...");
-        // 解決 Cross-Origin-Opener-Policy 的最佳方案
-        await signInWithRedirect(auth, provider);
-    } catch (err) {
-        console.error("登入出錯:", err);
-        alert("登入失敗：" + err.message);
-    }*/
     try {
         console.log("嘗試開啟彈窗登入...");
         const result = await signInWithPopup(auth, provider);
