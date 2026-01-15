@@ -563,14 +563,17 @@ function generateEditRow(item, idx) {
                 </div>
             </div>
 
-            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                <div style="flex: 1; background: #f0f7ff; padding: 5px 8px; border-radius: 4px; display: flex; align-items: center; border: 1px solid #d0e4f5;">
+            <div style="display: flex; gap: 8px; margin-bottom: 8px; width: 100%; box-sizing: border-box;">
+                <div style="flex: 1; min-width: 0; background: #f0f7ff; padding: 5px 8px; border-radius: 4px; display: flex; align-items: center; border: 1px solid #d0e4f5;">
                     <span style="font-size: 12px; color: #2980b9; margin-right: 5px; white-space: nowrap;">🚗 車程:</span>
-                    <input type="text" name="drive" class="drive-input" value="${displayDrive}" placeholder="自動計算" style="flex:1; border: none; background: transparent; color: #2980b9; font-size: 12px;">
+                    <input type="text" name="drive" class="drive-input" value="${displayDrive}" placeholder="自動計算" 
+                           style="width: 100%; border: none; background: transparent; color: #2980b9; font-size: 12px; min-width: 0;">
                 </div>
-                <div style="flex: 1.5; background: #fef5e7; padding: 5px 8px; border-radius: 4px; display: flex; align-items: center; border: 1px solid #fad7a0;">
+                
+                <div style="flex: 1.5; min-width: 0; background: #fef5e7; padding: 5px 8px; border-radius: 4px; display: flex; align-items: center; border: 1px solid #fad7a0;">
                     <span style="font-size: 12px; color: #d35400; margin-right: 5px; white-space: nowrap;">🔗 連結:</span>
-                    <input type="url" name="link" value="${item.link || ''}" placeholder="預訂網址" style="flex: 1; border: none; background: transparent; font-size: 12px;">
+                    <input type="url" name="link" value="${item.link || ''}" placeholder="預訂網址" 
+                           style="width: 100%; border: none; background: transparent; font-size: 12px; min-width: 0;">
                 </div>
             </div>
 
