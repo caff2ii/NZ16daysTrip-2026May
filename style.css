@@ -112,20 +112,19 @@ body { font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; display: 
 
 /* 排序按鈕樣式 */
 .sort-btn {
-    background: white;
-    border: 1px solid #dcdfe6;
-    border-radius: 4px;
+    border: 1px solid #ddd;
+    background: #fff;
+    border-radius: 3px;
+    font-size: 10px;
+    padding: 1px 5px;
     cursor: pointer;
-    font-size: 12px;
-    padding: 2px 6px;
-    color: #606266;
-    transition: all 0.2s;
+    color: #7f8c8d;
+    line-height: 1;
 }
-
 .sort-btn:hover {
-    background: #3498db;
-    color: white;
-    border-color: #3498db;
+    background: #f0f0f0;
+    color: #2c3e50;
+    border-color: #bdc3c7;
 }
 
 /* 輸入框美化 */
