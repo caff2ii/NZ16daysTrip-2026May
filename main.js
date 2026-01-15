@@ -524,7 +524,13 @@ function generateEditRow(item, idx) {
                     <button type="button" onclick="moveRow(this, -1)" class="sort-btn" style="width: 28px; height: 100%; display: flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; border-right: 1px solid #ddd;">▲</button>
                     <button type="button" onclick="moveRow(this, 1)" class="sort-btn" style="width: 28px; height: 100%; display: flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer;">▼</button>
                 </div>
-                <input type="text" name="time" value="${item.time}" placeholder="00:00" class="time-input-24h">
+                <input type="text" 
+                       name="time" 
+                       value="${item.time}" 
+                       placeholder="HHmm" 
+                       maxlength="5"
+                       oninput="formatTimeInput(this)"
+                       style="width: 60px; flex-shrink: 0; height: 32px; text-align: center; border: 1px solid #dcdfe6; border-radius: 6px; font-size: 13px; font-family: monospace; font-weight: bold;">
                 <select name="type" style="width: 70px; flex-shrink: 0; height: 32px;">
                     <option value="visit" ${item.type==='visit'?'selected':''}>景點</option>
                     <option value="drive" ${item.type==='drive'?'selected':''}>開車</option>
@@ -879,6 +885,22 @@ window.openLoginModal = function() {
 
 window.closeLoginModal = function() {
     document.getElementById('login-modal').style.display = 'none';
+};
+
+//time
+window.formatTimeInput = function(input) {
+    // 1. 只准輸入數字，刪除所有非數字字元
+    let val = input.value.replace(/\D/g, '');
+    
+    // 2. 限制最多 4 位數字 (HHmm)
+    if (val.length > 4) val = val.slice(0, 4);
+    
+    // 3. 如果達到 3-4 位數字，自動在第 2 位後面補冒號
+    if (val.length >= 3) {
+        input.value = val.slice(0, 2) + ':' + val.slice(2);
+    } else {
+        input.value = val;
+    }
 };
 
 // 10. Global Function Exposures
