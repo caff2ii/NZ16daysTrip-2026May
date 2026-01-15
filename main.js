@@ -515,11 +515,19 @@ function generateEditRow(item, idx) {
     const options = generateLocOptions(item.mapKey);
 
     return `
-        <div class="edit-item-row" draggable="true" data-idx="${idx}">
+        <div class="edit-item-row" data-idx="${idx}">
             <div class="row-number-badge">ITEM ${idx + 1}</div>
             <button class="btn-delete-row" onclick="this.parentElement.remove(); window.updateRoutePreview();">×</button>
             <div class="edit-row-header">
-                <span class="drag-handle">☰</span>
+                <div class="drag-controls" style="display: flex; flex-direction: column; gap: 4px; align-items: center; margin-right: 8px;">
+                    <span class="drag-handle" 
+                          draggable="true" 
+                          on Rebel dragstart="/* 這裡接你原本的拖拽邏輯 */" 
+                          style="cursor: grab; font-size: 18px; color: #95a5a6; padding: 2px 5px; background: #f8f9fa; border-radius: 4px;">☰</span>
+                    
+                    <button type="button" onclick="moveRow(this, -1)" class="sort-btn" style="padding: 0 5px; cursor: pointer; border: 1px solid #ddd; background: #fff; border-radius: 3px; font-size: 10px;">▲</button>
+                    <button type="button" onclick="moveRow(this, 1)" class="sort-btn" style="padding: 0 5px; cursor: pointer; border: 1px solid #ddd; background: #fff; border-radius: 3px; font-size: 10px;">▼</button>
+                </div>
                 <div class="input-group" style="flex:1;">
                     <input type="time" name="time" value="${item.time}" style="width:106px; flex-shrink:0;">
                     <select name="type" style="width:70px;">
