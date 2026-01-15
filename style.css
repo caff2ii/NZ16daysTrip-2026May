@@ -72,6 +72,12 @@ body { font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; display: 
 .btn-save { background: #27ae60; }
 .btn-cancel { background: #95a5a6; margin-right: 5px;}
 
+/* 核心修復：防止 Flex 項目突出去 */
+.edit-row-header {
+    width: 100%;
+    box-sizing: border-box;
+}
+
 /* 每一格編輯卡片：緊湊橫向排版 */
 .edit-item-row { 
     background: #fff; 
@@ -100,6 +106,7 @@ body { font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; display: 
     border-radius: 6px;
     border: 1px solid #ddd;
     flex-shrink: 0;
+    overflow: hidden;
 }
 
 .drag-handle { 
@@ -116,13 +123,14 @@ body { font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; display: 
 .sort-btn {
     border: none;
     background: transparent;
-    font-size: 10px;
+    font-size: 12px !important;
     padding: 2px 4px;
     cursor: pointer;
     color: #7f8c8d;
     line-height: 1;
+    transition: background 0.2s;
 }
-.sort-btn:hover { color: #3498db; background: rgba(0,0,0,0.05); }
+.sort-btn:hover { color: #3498db; background: #e4e7ed !important; }
 
 /* 輸入框美化與精簡 */
 .input-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -134,6 +142,14 @@ body { font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; display: 
     transition: border-color 0.2s;
 }
 
+.edit-item-row input, 
+.edit-item-row select {
+    height: 32px !important;
+    line-height: 32px;
+    vertical-align: middle;
+    min-width: 0; /* 這是關鍵：防止 input 撐開父容器 */
+}
+
 .input-group input:focus, .input-full:focus {
     border-color: #3498db;
     outline: none;
@@ -142,6 +158,11 @@ body { font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; display: 
 
 .input-full { width: 100%; box-sizing: border-box; }
 textarea.input-full { resize: vertical; min-height: 45px; font-family: inherit; }
+
+/* 名稱 input 專門修復 */
+input[name="text"] {
+    flex: 1;
+}
 
 /* 序號標籤 */
 .row-number-badge {
