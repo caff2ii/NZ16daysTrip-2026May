@@ -516,6 +516,7 @@ function generateEditRow(item, idx) {
 
     return `
         <div class="edit-item-row" draggable="true" data-idx="${idx}">
+            <div class="row-number-badge">ITEM ${idx + 1}</div>
             <button class="btn-delete-row" onclick="this.parentElement.remove(); window.updateRoutePreview();">×</button>
             <div class="edit-row-header">
                 <span class="drag-handle">☰</span>
