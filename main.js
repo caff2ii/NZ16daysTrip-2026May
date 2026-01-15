@@ -959,23 +959,21 @@ window.formatDriveTime = function(driveStr) {
 
 // 同步函數：將頂部資料推送到下方所有 hotel 類型的 row
 window.syncStayToItems = function() {
-    const mainStayName = document.getElementById('edit-stay').value;
-    const mainStayLink = document.getElementById('edit-stayLink').value;
-    const mainStayLoc = document.getElementById('edit-stayMapKey').value;
+    const stayName = document.getElementById('edit-stay').value;
+    const stayLink = document.getElementById('edit-stayLink').value;
+    const stayLoc = document.getElementById('edit-stayMapKey').value;
 
-    // 找出所有編輯行
     const rows = document.querySelectorAll('.edit-item-row');
     rows.forEach(row => {
         const typeSelect = row.querySelector('select[name="type"]');
-        // 只針對類型為 "hotel" 的行進行同步
         if (typeSelect && typeSelect.value === 'hotel') {
             const nameInput = row.querySelector('input[name="text"]');
             const linkInput = row.querySelector('input[name="link"]');
             const locSelect = row.querySelector('select[name="mapKey"]');
 
-            if (nameInput) nameInput.value = mainStayName;
-            if (linkInput) linkInput.value = mainStayLink;
-            if (locSelect) locSelect.value = mainStayLoc;
+            if (nameInput) nameInput.value = stayName;
+            if (linkInput) linkInput.value = stayLink;
+            if (locSelect) locSelect.value = stayLoc;
         }
     });
     
@@ -986,25 +984,36 @@ window.syncStayToItems = function() {
 function generateEditHeader(data) {
     const locOptions = generateLocOptions(data.stayMapKey || ''); 
     return `
-        <div class="edit-day-header" style="background:#f8f9fa; padding:15px; border-radius:12px; margin-bottom:20px; border:1px solid #e0e6ed;">
-            <h3 style="margin:0 0 10px; font-size:16px; color:#2c3e50;">🏨 住宿同步配置</h3>
-            <div style="display:flex; gap:8px; margin-bottom:10px;">
-                <div style="flex:1; min-width:0;">
-                    <label style="font-size:11px; color:#7f8c8d;">住宿名稱</label>
+        <div class="edit-day-header" style="background:#f8f9fa; padding:15px; border-radius:12px; margin-bottom:20px; border:1px solid #e0e6ed; box-sizing: border-box;">
+            <h3 style="margin:0 0 12px; font-size:16px; color:#2c3e50; display:flex; align-items:center; gap:5px;">
+                🏨 住宿同步配置 <span style="font-size:10px; font-weight:normal; color:#95a5a6;">(修改後自動填入下方)</span>
+            </h3>
+            
+            <div style="display:flex; gap:8px; margin-bottom:12px; width: 100%; box-sizing: border-box;">
+                <div style="flex:1.2; min-width:0;">
+                    <label style="font-size:11px; color:#7f8c8d; display:block; margin-bottom:4px;">住宿名稱</label>
                     <input type="text" id="edit-stay" value="${data.stay || ''}" 
-                           oninput="syncStayToItems()" placeholder="例如: Sudima Hotel" style="width:100%; height:32px; border:1px solid #ddd; border-radius:4px; padding:0 8px;">
+                           oninput="window.syncStayToItems()" placeholder="例如: Sudima" 
+                           style="width:100%; height:32px; border:1px solid #ddd; border-radius:6px; padding:0 8px; box-sizing: border-box;">
                 </div>
                 <div style="flex:1; min-width:0;">
-                    <label style="font-size:11px; color:#7f8c8d;">Google Map 定位</label>
-                    <select id="edit-stayMapKey" onchange="syncStayToItems()" style="width:100%; height:32px; border:1px solid #ddd; border-radius:4px;">
-                        ${locOptions}
-                    </select>
+                    <label style="font-size:11px; color:#7f8c8d; display:block; margin-bottom:4px;">Google Map 定位</label>
+                    <div style="display:flex; align-items:center; background:white; border:1px solid #ddd; border-radius:6px; padding-right:4px; height:32px; box-sizing: border-box;">
+                        <select id="edit-stayMapKey" onchange="window.syncStayToItems()" 
+                                style="flex:1; border:none; background:transparent; height:100%; min-width:0; font-size:12px; outline:none;">
+                            ${locOptions}
+                        </select>
+                        <button type="button" onclick="window.openLocManager()" 
+                                style="background:none; border:none; cursor:pointer; padding:0 4px; font-size:16px; flex-shrink:0;" title="管理座標庫">⚙️</button>
+                    </div>
                 </div>
             </div>
-            <div style="margin-bottom:5px;">
-                <label style="font-size:11px; color:#7f8c8d;">預訂/官網連結</label>
+
+            <div style="width: 100%; box-sizing: border-box;">
+                <label style="font-size:11px; color:#7f8c8d; display:block; margin-bottom:4px;">預訂/官網連結</label>
                 <input type="url" id="edit-stayLink" value="${data.stayLink || ''}" 
-                       oninput="syncStayToItems()" placeholder="https://..." style="width:100%; height:32px; border:1px solid #ddd; border-radius:4px; padding:0 8px;">
+                       oninput="window.syncStayToItems()" placeholder="https://..." 
+                       style="width:100%; height:32px; border:1px solid #ddd; border-radius:6px; padding:0 8px; box-sizing: border-box;">
             </div>
         </div>
     `;
