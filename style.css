@@ -264,3 +264,31 @@ input[type="number"]::-webkit-outer-spin-button {
     opacity: 1;
     height: 24px;
 }
+
+/* 住宿連結按鈕樣式 */
+.stay-link-btn {
+    text-decoration: none;
+    font-size: 12px;
+    background: #e67e22; /* 橙色，與 Google Map 的藍色區分 */
+    color: white !important;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    transition: background 0.2s;
+    box-shadow: 0 2px 4px rgba(230, 126, 34, 0.2);
+}
+
+.stay-link-btn:hover {
+    background: #d35400;
+}
+
+/* 確保容器在手機上排版正常 */
+.stay-info-container {
+    margin-bottom: 15px;
+}
+
+.stay-info {
+    flex-shrink: 1;
+}
