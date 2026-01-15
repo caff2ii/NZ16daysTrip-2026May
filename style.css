@@ -33,18 +33,8 @@ body { font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; display: 
     margin-left: 8px;
     font-weight: 500;
 }
-.drive-info {
-    margin-top: 10px;
-    padding: 6px 12px;
-    background: #fdf2e9; /* 淺橘色背景 */
-    color: #e67e22; /* 橘色文字，呼應 .drive 的 f39c12 */
-    border-radius: 8px;
-    font-size: 12px;
-    display: inline-block;
-    border: 1px solid #fad7a0;
-}
 
-/* Timeline */
+/* Timeline View Mode */
 .timeline-item { position: relative; padding-left: 25px; border-left: 2px solid #e0e0e0; margin-bottom: 20px; padding-bottom: 5px; }
 .timeline-item::before { content: ''; position: absolute; left: -6px; top: 5px; width: 10px; height: 10px; border-radius: 50%; background: #1abc9c; }
 .timeline-item.drive::before { background: #f39c12; }
@@ -57,13 +47,23 @@ body { font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; display: 
 .links-row { margin-top: 5px; font-size: 12px; }
 .links-row a { color: #3498db; text-decoration: none; margin-right: 10px; }
 .links-row a:hover { text-decoration: underline; }
-.drive-info { background: #fdf2e9; padding: 5px 8px; border-radius: 4px; font-size: 12px; color: #d35400; margin-top: 6px; display: inline-block; font-weight: bold;}
+.drive-info { 
+    margin-top: 10px;
+    padding: 6px 12px;
+    background: #fdf2e9; 
+    color: #e67e22; 
+    border-radius: 8px;
+    font-size: 12px;
+    display: inline-block;
+    border: 1px solid #fad7a0;
+    font-weight: bold;
+}
 
-/* --- 編輯模式優化 --- */
+/* --- 編輯模式優化 (所有原始控件均已保留並改善排版) --- */
 .edit-controls { 
     margin-bottom: 20px; 
     text-align: right; 
-    position: sticky; /* 讓儲存按鈕滾動時留在頂部 */
+    position: sticky; 
     top: 10px;
     z-index: 100;
 }
@@ -72,65 +72,62 @@ body { font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; display: 
 .btn-save { background: #27ae60; }
 .btn-cancel { background: #95a5a6; margin-right: 5px;}
 
-/* 讓每一格變成明顯的「卡片」 */
+/* 每一格編輯卡片：緊湊橫向排版 */
 .edit-item-row { 
     background: #fff; 
-    border: 2px solid #e0e6ed; /* 加粗邊框顏色 */
-    padding: 18px; /* 增加內距 */
-    margin-bottom: 25px; /* 增加每一格之間的距離，防止看錯行 */
+    border: 2px solid #e0e6ed; 
+    padding: 12px !important; /* 縮減內距以節省空間 */
+    margin-bottom: 15px !important; /* 格子間距 */
     border-radius: 12px; 
     display: flex; 
     flex-direction: column; 
-    gap: 12px; /* 加大內部組件的間距 */
+    gap: 8px; 
     position: relative; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* 加入淡淡陰影 */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
     transition: all 0.2s ease;
     user-select: text;
 }
 
-/* 滑過或選中時，邊框變色提示 */
-.edit-item-row:hover { 
-    border-color: #3498db;
-    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.15); 
-}
+.edit-item-row:hover { border-color: #3498db; }
 
-/* 拖拽手把 */
-.drag-handle { 
-    cursor: grab; /* 變成小手抓取的圖示 */
-    user-select: none; /* 防止手把文字被選中 */
-    background: #f0f2f5;
-    padding: 10px;
-    border-radius: 6px;
+/* 橫向排序控制區：整合 ☰, ▲, ▼ */
+.drag-controls {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 5px;
-}
-.drag-handle:active {
-    cursor: grabbing;
+    gap: 2px;
+    background: #f0f2f5;
+    padding: 2px 6px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    flex-shrink: 0;
 }
 
-/* 排序按鈕樣式 */
+.drag-handle { 
+    cursor: grab; 
+    user-select: none; 
+    font-size: 16px; 
+    color: #95a5a6; 
+    padding-right: 5px;
+    border-right: 1px solid #ccc;
+    margin-right: 2px;
+}
+.drag-handle:active { cursor: grabbing; }
+
 .sort-btn {
-    border: 1px solid #ddd;
-    background: #fff;
-    border-radius: 3px;
+    border: none;
+    background: transparent;
     font-size: 10px;
-    padding: 1px 5px;
+    padding: 2px 4px;
     cursor: pointer;
     color: #7f8c8d;
     line-height: 1;
 }
-.sort-btn:hover {
-    background: #f0f0f0;
-    color: #2c3e50;
-    border-color: #bdc3c7;
-}
+.sort-btn:hover { color: #3498db; background: rgba(0,0,0,0.05); }
 
-/* 輸入框美化 */
-.input-group { display: flex; gap: 8px; flex-wrap: wrap; }
-.input-group input, .input-group select, .input-full { 
-    padding: 8px 10px; 
+/* 輸入框美化與精簡 */
+.input-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.edit-item-row input, .edit-item-row select, .edit-item-row .input-full { 
+    padding: 6px 10px; 
     border: 1px solid #dcdfe6; 
     border-radius: 6px; 
     font-size: 14px; 
@@ -143,33 +140,37 @@ body { font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; display: 
     background: #fdfdfd;
 }
 
-/* 序號標籤 (需配合 HTML 加入) */
+.input-full { width: 100%; box-sizing: border-box; }
+textarea.input-full { resize: vertical; min-height: 45px; font-family: inherit; }
+
+/* 序號標籤 */
 .row-number-badge {
     position: absolute;
-    top: -12px;
+    top: -10px;
     left: 15px;
     background: #34495e;
     color: white;
-    font-size: 11px;
-    padding: 2px 10px;
+    font-size: 10px;
+    padding: 1px 8px;
     border-radius: 10px;
     font-weight: bold;
+    z-index: 5;
 }
 
-/* 刪除按鈕移到右上角外面一點，避免擋住內容 */
+/* 刪除按鈕 */
 .btn-delete-row { 
     position: absolute; 
-    top: -10px; 
-    right: -10px; 
+    top: -8px; 
+    right: -8px; 
     background: #e74c3c; 
     color: white; 
     border: 2px solid #fff; 
-    width: 26px; 
-    height: 26px; 
+    width: 24px; 
+    height: 24px; 
     border-radius: 50%; 
     cursor: pointer; 
-    font-size: 16px; 
-    line-height: 22px; 
+    font-size: 14px; 
+    line-height: 20px; 
     text-align: center; 
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
@@ -178,12 +179,12 @@ body { font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; display: 
     background: #fff; 
     color: #f39c12; 
     width: 100%; 
-    padding: 15px; 
+    padding: 12px; 
     border: 2px dashed #f39c12; 
     border-radius: 10px;
-    margin-top: 20px; 
+    margin-top: 10px; 
     cursor: pointer; 
-    font-size: 16px;
+    font-size: 15px;
     font-weight: bold;
     transition: all 0.2s;
 }
@@ -202,6 +203,7 @@ body { font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; display: 
 .loc-actions button { margin-left: 5px; font-size: 10px; padding: 3px 6px; cursor: pointer; }
 .coord-input { width: calc(50% - 5px); display: inline-block; }
 
+/* Responsive */
 @media (max-width: 768px) {
     #main-container { flex-direction: column-reverse; }
     #sidebar { width: 100%; height: 50%; }
@@ -209,17 +211,17 @@ body { font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; display: 
     .nav-buttons { overflow-x: auto; justify-content: start; }
 }
 
-/* 重置數據按鈕 - 窄版置中樣式 */
+/* Reset Button Style */
 #reset-data-btn {
-    display: none; /* 初始隱藏，由 JS 判斷顯示 */
-    width: auto;   /* 寬度隨文字長度 */
-    min-width: 120px; /* 設定最小寬度 */
-    margin: 30px auto; /* 上下留 30px 空間，auto 負責水平置中 */
+    display: none; 
+    width: auto;   
+    min-width: 120px; 
+    margin: 30px auto; 
     padding: 6px 12px;
-    background-color: #f2f2f2; /* 極淺灰 */
-    color: #a0a0a0;           /* 灰色文字 */
+    background-color: #f2f2f2; 
+    color: #a0a0a0;           
     border: 1px solid #ddd;
-    border-radius: 20px;      /* 圓角設計，看起來更精緻 */
+    border-radius: 20px;      
     font-size: 11px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -227,12 +229,12 @@ body { font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; display: 
 }
 
 #reset-data-btn:hover {
-    background-color: #ffeaea; /* 移上去變淺紅 */
-    color: #e74c3c;           /* 文字變紅 */
+    background-color: #ffeaea; 
+    color: #e74c3c;           
     border-color: #fab1a0;
 }
 
-/* 讓 number input 的箭頭稍微大一點，方便操作 */
+/* Number Input Arrows */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
     opacity: 1;
