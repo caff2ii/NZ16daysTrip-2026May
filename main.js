@@ -519,19 +519,19 @@ function generateEditRow(item, idx) {
             <button class="btn-delete-row" onclick="this.parentElement.remove(); window.updateRoutePreview();">×</button>
             
             <div class="edit-row-header" style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
-                <div class="drag-controls" style="display: flex; align-items: center; gap: 2px; background: #eee; padding: 2px 5px; border-radius: 4px; flex-shrink: 0;">
-                    <span class="drag-handle" draggable="true" style="cursor: grab; font-size: 16px; color: #95a5a6; padding-right: 4px; border-right: 1px solid #ccc;">☰</span>
-                    <button type="button" onclick="moveRow(this, -1)" class="sort-btn" style="padding: 0 4px; border: none; background: transparent; cursor: pointer; font-size: 10px;">▲</button>
-                    <button type="button" onclick="moveRow(this, 1)" class="sort-btn" style="padding: 0 4px; border: none; background: transparent; cursor: pointer; font-size: 10px;">▼</button>
+                <div class="drag-controls" style="display: flex; align-items: center; gap: 0; background: #f0f2f5; border-radius: 6px; border: 1px solid #ddd; height: 32px; flex-shrink: 0;">
+                    <span class="drag-handle" draggable="true" style="cursor: grab; font-size: 14px; color: #95a5a6; padding: 0 8px; display: flex; align-items: center; height: 100%; border-right: 1px solid #ddd;">☰</span>
+                    <button type="button" onclick="moveRow(this, -1)" class="sort-btn" style="width: 28px; height: 100%; display: flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; border-right: 1px solid #ddd;">▲</button>
+                    <button type="button" onclick="moveRow(this, 1)" class="sort-btn" style="width: 28px; height: 100%; display: flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer;">▼</button>
                 </div>
-                <input type="time" name="time" value="${item.time}" style="width: 100px; flex-shrink: 0;">
-                <select name="type" style="width: 70px; flex-shrink: 0;">
+                <input type="time" name="time" value="${item.time}" style="width: 100px; flex-shrink: 0; height: 32px;">
+                <select name="type" style="width: 70px; flex-shrink: 0; height: 32px;">
                     <option value="visit" ${item.type==='visit'?'selected':''}>景點</option>
                     <option value="drive" ${item.type==='drive'?'selected':''}>開車</option>
                     <option value="hotel" ${item.type==='hotel'?'selected':''}>住宿</option>
                     <option value="food" ${item.type==='food'?'selected':''}>餐廳</option>
                 </select>
-                <input type="text" name="text" value="${item.text}" class="input-full" placeholder="名稱" style="flex: 1;">
+                <input type="text" name="text" value="${item.text}" class="input-full" placeholder="名稱" style="flex: 1; min-width: 0; height: 32px;">
             </div>
             
             <textarea name="desc" class="input-full" placeholder="詳細介紹" style="margin-bottom: 8px; min-height: 40px;">${item.desc || ''}</textarea>
