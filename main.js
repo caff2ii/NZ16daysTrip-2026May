@@ -524,7 +524,7 @@ function generateEditRow(item, idx) {
                     <button type="button" onclick="moveRow(this, -1)" class="sort-btn" style="width: 28px; height: 100%; display: flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; border-right: 1px solid #ddd;">▲</button>
                     <button type="button" onclick="moveRow(this, 1)" class="sort-btn" style="width: 28px; height: 100%; display: flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer;">▼</button>
                 </div>
-                <input type="time" name="time" value="${item.time}" style="width: 100px; flex-shrink: 0; height: 32px;">
+                <input type="text" name="time" value="${item.time}" placeholder="00:00" class="time-input-24h">
                 <select name="type" style="width: 70px; flex-shrink: 0; height: 32px;">
                     <option value="visit" ${item.type==='visit'?'selected':''}>景點</option>
                     <option value="drive" ${item.type==='drive'?'selected':''}>開車</option>
