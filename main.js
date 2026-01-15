@@ -519,14 +519,10 @@ function generateEditRow(item, idx) {
             <div class="row-number-badge">ITEM ${idx + 1}</div>
             <button class="btn-delete-row" onclick="this.parentElement.remove(); window.updateRoutePreview();">×</button>
             <div class="edit-row-header">
-                <div class="drag-controls" style="display: flex; flex-direction: column; gap: 4px; align-items: center; margin-right: 8px;">
-                    <span class="drag-handle" 
-                          draggable="true" 
-                          on Rebel dragstart="/* 這裡接你原本的拖拽邏輯 */" 
-                          style="cursor: grab; font-size: 18px; color: #95a5a6; padding: 2px 5px; background: #f8f9fa; border-radius: 4px;">☰</span>
-                    
-                    <button type="button" onclick="moveRow(this, -1)" class="sort-btn" style="padding: 0 5px; cursor: pointer; border: 1px solid #ddd; background: #fff; border-radius: 3px; font-size: 10px;">▲</button>
-                    <button type="button" onclick="moveRow(this, 1)" class="sort-btn" style="padding: 0 5px; cursor: pointer; border: 1px solid #ddd; background: #fff; border-radius: 3px; font-size: 10px;">▼</button>
+                <div class="drag-controls" style="display: flex; flex-direction: column; gap: 4px; align-items: center; margin-right: 10px;">
+                    <span class="drag-handle" draggable="true" style="cursor: grab; font-size: 18px; color: #95a5a6; background: #eee; padding: 2px 8px; border-radius: 4px;">☰</span>                    
+                    <button type="button" onclick="moveRow(this, -1)" class="sort-btn">▲</button>
+                    <button type="button" onclick="moveRow(this, 1)" class="sort-btn">▼</button>
                 </div>
                 <div class="input-group" style="flex:1;">
                     <input type="time" name="time" value="${item.time}" style="width:106px; flex-shrink:0;">
@@ -653,10 +649,21 @@ function saveDayEdit() {
 function enableDragAndDrop() {
     const rows = document.querySelectorAll('.edit-item-row');
     rows.forEach(row => {
-        row.addEventListener('dragstart', handleDragStart);
+        const handle = row.querySelector('.drag-handle');
+        
+        // 只有從 handle 開始拖拽時才記錄目標
+        handle.addEventListener('dragstart', (e) => {
+            dragSrcEl = row; // 記錄整個 row 為被拖對象
+            e.dataTransfer.effectAllowed = 'move';
+            row.style.opacity = '0.4';
+        });
+
         row.addEventListener('dragover', handleDragOver);
         row.addEventListener('drop', handleDrop);
-        row.addEventListener('dragend', handleDragEnd);
+        row.addEventListener('dragend', () => {
+            row.style.opacity = '1';
+            updateRowNumbers(); // 每次拖完更新序號
+        });
     });
 }
 function handleDragStart(e) { dragSrcEl = this; e.dataTransfer.effectAllowed = 'move'; this.style.opacity = '0.4'; }
@@ -684,6 +691,33 @@ function updateRoutePreview() {
     });
     const color = itineraryData[currentDayIndex].color;
     updateMapWithRouting(tempRoute, color);
+}
+// 新增：一鍵移動函數
+window.moveRow = function(btn, direction) {
+    const row = btn.closest('.edit-item-row');
+    const container = row.parentElement;
+    
+    if (direction === -1) {
+        const prev = row.previousElementSibling;
+        if (prev && prev.classList.contains('edit-item-row')) {
+            container.insertBefore(row, prev);
+        }
+    } else {
+        const next = row.nextElementSibling;
+        if (next && next.classList.contains('edit-item-row')) {
+            container.insertBefore(next, row);
+        }
+    }
+    
+    updateRowNumbers();
+    window.updateRoutePreview();
+};
+
+// 新增：更新 Item 序號
+function updateRowNumbers() {
+    document.querySelectorAll('.row-number-badge').forEach((badge, i) => {
+        badge.innerText = `ITEM ${i + 1}`;
+    });
 }
 
 // --- 8. 地圖路由 (OSRM) ---
