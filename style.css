@@ -74,8 +74,10 @@ body { font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; display: 
 
 /* 核心修復：防止 Flex 項目突出去 */
 .edit-row-header {
-    width: 100%;
-    box-sizing: border-box;
+    display: flex !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    gap: 6px !important;
 }
 
 /* 每一格編輯卡片：緊湊橫向排版 */
@@ -161,7 +163,8 @@ textarea.input-full { resize: vertical; min-height: 45px; font-family: inherit; 
 
 /* 名稱 input 專門修復 */
 input[name="text"] {
-    flex: 1;
+    flex: 1 !important;
+    min-width: 0 !important;
 }
 
 /* 序號標籤 */
