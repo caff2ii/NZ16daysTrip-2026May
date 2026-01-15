@@ -337,7 +337,6 @@ function renderViewMode() {
                 <div class="stay-info" style="display:flex; align-items:center;">
                     🏨 今晚住宿: <b>${data.stay}</b> ${stayLinkBtn}
                 </div>
-                ${stayLinkBtn}
             </div>
             
             ${editBtnHtml}
