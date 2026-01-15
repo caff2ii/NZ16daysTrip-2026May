@@ -324,12 +324,22 @@ function renderViewMode() {
         `<button class="btn-main" onclick="window.startEditMode()" style="margin-top:10px; width:100%;">✏️ 編輯整日行程</button>` : 
         `<div style="text-align:center; color:#95a5a6; font-size:12px; padding:10px; background:#eee; border-radius:5px; margin-top:10px;">(唯讀模式，登入後可編輯)</div>`;
     
+    const stayLinkBtn = data.stayLink ? 
+        `<a href="${data.stayLink}" target="_blank" class="stay-link-btn">🔗 查看預訂</a>` : '';
+
     let html = `
         <div class="day-header">
             <div style="font-size:12px; color:#7f8c8d;">前一晚住宿: <b>${data.prevStay || '無'}</b></div>
             <h2 style="margin:5px 0 10px; color:#2c3e50;">Day ${data.day}: ${data.title}</h2>
-            <div style="font-size:13px; margin-bottom:5px;">📅 ${data.date}</div>
-            <div class="stay-info">🏨 今晚住宿: <b>${data.stay}</b></div>
+            <div style="font-size:13px; margin-bottom:10px;">📅 ${data.date}</div>
+            
+            <div class="stay-info-container" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <div class="stay-info" style="margin-bottom:0;">
+                    🏨 今晚住宿: <b>${data.stay}</b>
+                </div>
+                ${stayLinkBtn}
+            </div>
+            
             ${editBtnHtml}
         </div>
     `;
@@ -497,13 +507,13 @@ function startEditMode() {
             <span id="sync-status" style="font-size: 12px; color: #27ae60; font-weight: bold; opacity: 0; transition: opacity 0.5s;"></span>
         </div>
 
+        ${generateEditHeader(data)}
+
         <div style="background:#f9f9f9; padding:10px; border-radius:5px; margin-bottom:15px;">
             <label style="font-size:12px; font-weight:bold;">標題</label>
             <input type="text" id="edit-day-title" value="${data.title}" class="input-full" style="margin-bottom:5px;">
             <label style="font-size:12px; font-weight:bold;">前一晚住宿</label>
             <input type="text" id="edit-prev-stay" value="${data.prevStay}" class="input-full" style="margin-bottom:5px;">
-            <label style="font-size:12px; font-weight:bold;">今晚住宿</label>
-            <input type="text" id="edit-stay" value="${data.stay}" class="input-full">
         </div>
 
         <div id="edit-list-container">
@@ -640,12 +650,17 @@ function saveDayEdit() {
     
     newSchedule.sort((a,b) => a.time.localeCompare(b.time));
 
-    // Update Local State FIRST
-    itineraryData[currentDayIndex].title = document.getElementById('edit-day-title').value;
-    itineraryData[currentDayIndex].prevStay = document.getElementById('edit-prev-stay').value;
-    itineraryData[currentDayIndex].stay = document.getElementById('edit-stay').value;
-    itineraryData[currentDayIndex].schedule = newSchedule;
-    itineraryData[currentDayIndex].route = newRoute;
+    // --- 更新 Local State (包含新欄位) ---
+    const dayData = itineraryData[currentDayIndex];
+    dayData.title = document.getElementById('edit-day-title').value;
+    dayData.prevStay = document.getElementById('edit-prev-stay').value;
+    dayData.stay = document.getElementById('edit-stay').value;
+    dayData.stayLink = document.getElementById('edit-stayLink').value;    // 新增
+    dayData.stayMapKey = document.getElementById('edit-stayMapKey').value; // 新增
+    
+    dayData.schedule = newSchedule;
+    dayData.route = newRoute;
+    // -----------------------------------
 
     // Reset Editing Mode Flag
     isEditingMode = false;
@@ -941,6 +956,59 @@ window.formatDriveTime = function(driveStr) {
     
     return driveStr; // 如果格式不符，回傳原始字串
 };
+
+// 同步函數：將頂部資料推送到下方所有 hotel 類型的 row
+window.syncStayToItems = function() {
+    const mainStayName = document.getElementById('edit-stay').value;
+    const mainStayLink = document.getElementById('edit-stayLink').value;
+    const mainStayLoc = document.getElementById('edit-stayMapKey').value;
+
+    // 找出所有編輯行
+    const rows = document.querySelectorAll('.edit-item-row');
+    rows.forEach(row => {
+        const typeSelect = row.querySelector('select[name="type"]');
+        // 只針對類型為 "hotel" 的行進行同步
+        if (typeSelect && typeSelect.value === 'hotel') {
+            const nameInput = row.querySelector('input[name="text"]');
+            const linkInput = row.querySelector('input[name="link"]');
+            const locSelect = row.querySelector('select[name="mapKey"]');
+
+            if (nameInput) nameInput.value = mainStayName;
+            if (linkInput) linkInput.value = mainStayLink;
+            if (locSelect) locSelect.value = mainStayLoc;
+        }
+    });
+    
+    // 如果你有即時預覽功能，同步後觸發更新
+    if (window.updateRoutePreview) window.updateRoutePreview();
+};
+
+function generateEditHeader(data) {
+    const locOptions = generateLocOptions(data.stayMapKey || ''); 
+    return `
+        <div class="edit-day-header" style="background:#f8f9fa; padding:15px; border-radius:12px; margin-bottom:20px; border:1px solid #e0e6ed;">
+            <h3 style="margin:0 0 10px; font-size:16px; color:#2c3e50;">🏨 住宿同步配置</h3>
+            <div style="display:flex; gap:8px; margin-bottom:10px;">
+                <div style="flex:1; min-width:0;">
+                    <label style="font-size:11px; color:#7f8c8d;">住宿名稱</label>
+                    <input type="text" id="edit-stay" value="${data.stay || ''}" 
+                           oninput="syncStayToItems()" placeholder="例如: Sudima Hotel" style="width:100%; height:32px; border:1px solid #ddd; border-radius:4px; padding:0 8px;">
+                </div>
+                <div style="flex:1; min-width:0;">
+                    <label style="font-size:11px; color:#7f8c8d;">Google Map 定位</label>
+                    <select id="edit-stayMapKey" onchange="syncStayToItems()" style="width:100%; height:32px; border:1px solid #ddd; border-radius:4px;">
+                        ${locOptions}
+                    </select>
+                </div>
+            </div>
+            <div style="margin-bottom:5px;">
+                <label style="font-size:11px; color:#7f8c8d;">預訂/官網連結</label>
+                <input type="url" id="edit-stayLink" value="${data.stayLink || ''}" 
+                       oninput="syncStayToItems()" placeholder="https://..." style="width:100%; height:32px; border:1px solid #ddd; border-radius:4px; padding:0 8px;">
+            </div>
+        </div>
+    `;
+}
 
 // 10. Global Function Exposures
 // 登入與權限控制 (新增)
