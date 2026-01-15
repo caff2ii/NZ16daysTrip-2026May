@@ -510,65 +510,58 @@ function startEditMode() {
     contentDiv.innerHTML = html;
     enableDragAndDrop();
 }
-
 function generateEditRow(item, idx) {
     const options = generateLocOptions(item.mapKey);
 
     return `
-        <div class="edit-item-row" data-idx="${idx}">
+        <div class="edit-item-row" data-idx="${idx}" style="padding: 12px; margin-bottom: 15px;">
             <div class="row-number-badge">ITEM ${idx + 1}</div>
             <button class="btn-delete-row" onclick="this.parentElement.remove(); window.updateRoutePreview();">×</button>
-            <div class="edit-row-header">
-                <div class="drag-controls" style="display: flex; flex-direction: column; gap: 4px; align-items: center; margin-right: 10px;">
-                    <span class="drag-handle" draggable="true" style="cursor: grab; font-size: 18px; color: #95a5a6; background: #eee; padding: 2px 8px; border-radius: 4px;">☰</span>                    
-                    <button type="button" onclick="moveRow(this, -1)" class="sort-btn">▲</button>
-                    <button type="button" onclick="moveRow(this, 1)" class="sort-btn">▼</button>
+            
+            <div class="edit-row-header" style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+                <div class="drag-controls" style="display: flex; align-items: center; gap: 2px; background: #eee; padding: 2px 5px; border-radius: 4px; flex-shrink: 0;">
+                    <span class="drag-handle" draggable="true" style="cursor: grab; font-size: 16px; color: #95a5a6; padding-right: 4px; border-right: 1px solid #ccc;">☰</span>
+                    <button type="button" onclick="moveRow(this, -1)" class="sort-btn" style="padding: 0 4px; border: none; background: transparent; cursor: pointer; font-size: 10px;">▲</button>
+                    <button type="button" onclick="moveRow(this, 1)" class="sort-btn" style="padding: 0 4px; border: none; background: transparent; cursor: pointer; font-size: 10px;">▼</button>
                 </div>
-                <div class="input-group" style="flex:1;">
-                    <input type="time" name="time" value="${item.time}" style="width:106px; flex-shrink:0;">
-                    <select name="type" style="width:70px;">
-                        <option value="visit" ${item.type==='visit'?'selected':''}>景點</option>
-                        <option value="drive" ${item.type==='drive'?'selected':''}>開車</option>
-                        <option value="hotel" ${item.type==='hotel'?'selected':''}>住宿</option>
-                        <option value="food" ${item.type==='food'?'selected':''}>餐廳</option>
-                    </select>
-                    <input type="text" name="text" value="${item.text}" class="input-full" placeholder="名稱">
-                </div>
+                <input type="time" name="time" value="${item.time}" style="width: 100px; flex-shrink: 0;">
+                <select name="type" style="width: 70px; flex-shrink: 0;">
+                    <option value="visit" ${item.type==='visit'?'selected':''}>景點</option>
+                    <option value="drive" ${item.type==='drive'?'selected':''}>開車</option>
+                    <option value="hotel" ${item.type==='hotel'?'selected':''}>住宿</option>
+                    <option value="food" ${item.type==='food'?'selected':''}>餐廳</option>
+                </select>
+                <input type="text" name="text" value="${item.text}" class="input-full" placeholder="名稱" style="flex: 1;">
             </div>
             
-            <textarea name="desc" class="input-full" placeholder="詳細介紹">${item.desc || ''}</textarea>
+            <textarea name="desc" class="input-full" placeholder="詳細介紹" style="margin-bottom: 8px; min-height: 40px;">${item.desc || ''}</textarea>
             
-            <div class="input-group">
-                <input type="text" name="hours" value="${item.hours || ''}" placeholder="開放時間" class="input-full">
-                <div style="flex: 1; display: flex; align-items: center; background: #fff3e0; padding: 5px 10px; border-radius: 6px; border: 1px solid #ffcc80; min-width: 120px;">
-                    <span style="font-size: 13px; color: #e65100; white-space: nowrap; margin-right: 5px;">⏳ 停留</span>
-                    <input type="number" 
-                           name="stayMinutes" 
-                           value="${item.stayMinutes || 60}" 
-                           step="10" 
-                           style="width: 50px; border: 1px solid #ffcc80; background: white; text-align: center; font-weight: bold; color: #e65100; font-size: 14px; border-radius: 4px; padding: 2px 0;">
-                    <span style="font-size: 13px; color: #e65100; margin-left: 5px;">分</span>
+            <div class="input-group" style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
+                <input type="text" name="hours" value="${item.hours || ''}" placeholder="開放時間" style="flex: 1.5;">
+                <div style="flex: 1; display: flex; align-items: center; background: #fff3e0; padding: 4px 10px; border-radius: 6px; border: 1px solid #ffcc80; justify-content: center;">
+                    <span style="font-size: 12px; color: #e65100; white-space: nowrap; margin-right: 5px;">⏳ 停留</span>
+                    <input type="number" name="stayMinutes" value="${item.stayMinutes || 60}" step="10" style="width: 45px; border: 1px solid #ffcc80; background: white; text-align: center; font-weight: bold; color: #e65100; font-size: 13px; border-radius: 4px;">
+                    <span style="font-size: 12px; color: #e65100; margin-left: 5px;">分</span>
                 </div>
             </div>
 
-            <div style="background: #f0f7ff; padding: 8px; border-radius: 4px; margin-top: 5px; display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 12px; color: #2980b9;">🚗 下段路程:</span>
-                <input type="text" name="drive" class="drive-input" value="${item.drive || ''}" placeholder="自動計算" style="flex:1; border: 1px dashed #3498db; background: transparent;">
+            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <div style="flex: 1; background: #f0f7ff; padding: 5px 8px; border-radius: 4px; display: flex; align-items: center; border: 1px solid #d0e4f5;">
+                    <span style="font-size: 12px; color: #2980b9; margin-right: 5px; white-space: nowrap;">🚗 車程:</span>
+                    <input type="text" name="drive" class="drive-input" value="${item.drive || ''}" placeholder="自動計算" style="flex:1; border: none; background: transparent; color: #2980b9; font-size: 12px;">
+                </div>
+                <div style="flex: 1.5; background: #fef5e7; padding: 5px 8px; border-radius: 4px; display: flex; align-items: center; border: 1px solid #fad7a0;">
+                    <span style="font-size: 12px; color: #d35400; margin-right: 5px; white-space: nowrap;">🔗 連結:</span>
+                    <input type="url" name="link" value="${item.link || ''}" placeholder="預訂網址" style="flex: 1; border: none; background: transparent; font-size: 12px;">
+                </div>
             </div>
 
-            <div style="margin-top: 5px; display: flex; align-items: center; gap: 8px; background: #fef5e7; padding: 5px 8px; border-radius: 4px; border: 1px solid #fad7a0;">
-                <span style="font-size: 12px; color: #d35400;">🔗 連結:</span>
-                <input type="url" name="link" value="${item.link || ''}" 
-                       placeholder="Booking.com / Airbnb / 餐廳預約網址" 
-                       style="flex: 1; font-size: 12px; padding: 4px; border: 1px solid #fad7a0; border-radius: 4px;">
-            </div>
-
-            <div class="input-group" style="background:#eee; padding:5px; border-radius:4px;">
-                <span style="font-size:11px; align-self:center;">🗺️ 地圖定位:</span>
-                <select name="mapKey" class="input-full map-key-select" onchange="window.updateRoutePreview()">
+            <div style="background:#eee; padding:5px 8px; border-radius:4px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size:11px; color:#666; white-space: nowrap;">🗺️ 地圖定位:</span>
+                <select name="mapKey" class="input-full map-key-select" onchange="window.updateRoutePreview()" style="flex: 1; border: 1px solid #ccc; background: white; font-size: 12px; height: 26px; padding: 0 5px;">
                     ${options}
                 </select>
-                <button class="btn-manage-loc" onclick="window.openLocManager()" title="管理地點座標">⚙️</button>
+                <button type="button" onclick="window.openLocManager()" title="管理地點座標" style="background:none; border:none; cursor:pointer; font-size:14px; padding: 0 4px;">⚙️</button>
             </div>
         </div>
     `;
@@ -694,26 +687,47 @@ function updateRoutePreview() {
 }
 // 新增：一鍵移動函數
 window.moveRow = function(btn, direction) {
+    // 1. 找到目前的這一格
     const row = btn.closest('.edit-item-row');
     const container = row.parentElement;
     
     if (direction === -1) {
+        // 向上移：找到前一個兄弟元素
         const prev = row.previousElementSibling;
+        // 確保前一個元素也是行程格子 (避免移過頭到標題或其它元件)
         if (prev && prev.classList.contains('edit-item-row')) {
             container.insertBefore(row, prev);
+        } else {
+            return; // 已經是頂部了
         }
     } else {
+        // 向下移：找到下一個兄弟元素
         const next = row.nextElementSibling;
         if (next && next.classList.contains('edit-item-row')) {
+            // insertBefore(要移動的, 在哪個之後) -> 這裡要把下一格插到目前這格的前面，效果等同於目前這格下移
             container.insertBefore(next, row);
+        } else {
+            return; // 已經是底部了
         }
     }
     
+    // 2. 移動後更新視覺序號 (ITEM 1, ITEM 2...)
     updateRowNumbers();
-    window.updateRoutePreview();
+    
+    // 3. 更新地圖路線預覽
+    if (window.updateRoutePreview) {
+        window.updateRoutePreview();
+    }
+
+    // 4. (選配) 增加一個簡單的閃爍效果，提示移動成功
+    row.style.transition = 'background-color 0.3s';
+    row.style.backgroundColor = '#f1f8ff';
+    setTimeout(() => {
+        row.style.backgroundColor = '#fff';
+    }, 300);
 };
 
-// 新增：更新 Item 序號
+// 更新所有格子序號的輔助函數
 function updateRowNumbers() {
     document.querySelectorAll('.row-number-badge').forEach((badge, i) => {
         badge.innerText = `ITEM ${i + 1}`;
