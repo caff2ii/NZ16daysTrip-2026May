@@ -339,9 +339,20 @@ function renderViewMode() {
         const mapQuery = encodeURIComponent(item.text + " New Zealand");
         const mapUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
 
-        // --- 停留時間顯示邏輯 ---
-        const stayHtml = item.stayMinutes ? 
-            `<span class="stay-badge">⏳ ${item.stayMinutes} min</span>` : '';
+        // --- 1. 停留時間顯示優化 (自動轉 hr) ---
+        let stayHtml = '';
+        if (item.stayMinutes) {
+            const sMin = parseInt(item.stayMinutes);
+            const stayText = sMin >= 60 ? `${(sMin / 60).toFixed(1)} hr` : `${sMin} min`;
+            stayHtml = `<span class="stay-badge">⏳ ${stayText}</span>`;
+        }
+
+        // --- 2. 車程自動換算 (152 min -> 2hr 32min) ---
+        let displayDrive = '';
+        if (item.drive) {
+            // 呼叫我們之前寫好的轉換函數
+            displayDrive = window.formatDriveTime ? window.formatDriveTime(item.drive) : item.drive;
+        }
         
         html += `
             <div class="timeline-item ${typeClass}">
@@ -367,9 +378,9 @@ function renderViewMode() {
                     ${item.desc ? item.desc.replace(/\n/g, '<br>') : ''}
                 </div>
     
-                ${item.drive ? `
+                ${displayDrive ? `
                     <div class="drive-info">
-                        🚗 <b>下段路程:</b> ${item.drive}
+                        🚗 <b>下段車程:</b> ${displayDrive}
                     </div>
                 ` : ''}
     
@@ -512,6 +523,7 @@ function startEditMode() {
 }
 function generateEditRow(item, idx) {
     const options = generateLocOptions(item.mapKey);
+    const displayDrive = window.formatDriveTime(item.drive || '');
 
     return `
         <div class="edit-item-row" data-idx="${idx}" style="padding: 12px; margin-bottom: 15px;">
@@ -554,7 +566,7 @@ function generateEditRow(item, idx) {
             <div style="display: flex; gap: 8px; margin-bottom: 8px;">
                 <div style="flex: 1; background: #f0f7ff; padding: 5px 8px; border-radius: 4px; display: flex; align-items: center; border: 1px solid #d0e4f5;">
                     <span style="font-size: 12px; color: #2980b9; margin-right: 5px; white-space: nowrap;">🚗 車程:</span>
-                    <input type="text" name="drive" class="drive-input" value="${item.drive || ''}" placeholder="自動計算" style="flex:1; border: none; background: transparent; color: #2980b9; font-size: 12px;">
+                    <input type="text" name="drive" class="drive-input" value="${displayDrive}" placeholder="自動計算" style="flex:1; border: none; background: transparent; color: #2980b9; font-size: 12px;">
                 </div>
                 <div style="flex: 1.5; background: #fef5e7; padding: 5px 8px; border-radius: 4px; display: flex; align-items: center; border: 1px solid #fad7a0;">
                     <span style="font-size: 12px; color: #d35400; margin-right: 5px; white-space: nowrap;">🔗 連結:</span>
@@ -901,6 +913,30 @@ window.formatTimeInput = function(input) {
     } else {
         input.value = val;
     }
+};
+
+//km
+window.formatDriveTime = function(driveStr) {
+    if (!driveStr) return '';
+    
+    // 使用正則表達式提取數字（分鐘）和剩餘部分（公里數）
+    const match = driveStr.match(/(\d+)\s*min(.*)/);
+    
+    if (match) {
+        const totalMin = parseInt(match[1]);
+        const extra = match[2]; // 這裡會拿到 " (184.9 km)"
+        
+        const hrs = Math.floor(totalMin / 60);
+        const mins = totalMin % 60;
+        
+        let result = "";
+        if (hrs > 0) result += `${hrs}hr `;
+        result += `${mins}min`;
+        
+        return result + extra;
+    }
+    
+    return driveStr; // 如果格式不符，回傳原始字串
 };
 
 // 10. Global Function Exposures
