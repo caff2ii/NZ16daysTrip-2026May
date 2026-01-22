@@ -38,6 +38,7 @@ onAuthStateChanged(auth, (user) => {
             adminTools.id = 'gemini-admin-tools';
             adminTools.style = "margin-left: 10px; display: inline-flex; gap: 5px; vertical-align: middle;";
             adminTools.innerHTML = `
+                <button onclick="window.openLocManager()" class="admin-top-btn" style="background:#34495e;">📍座標管理</button>
                 <button onclick="window.exportAllDays()" class="admin-top-btn" style="background:#673ab7;">📤 匯出</button>
                 <button onclick="window.importAllDays()" class="admin-top-btn" style="background:#009688;">📥 匯入</button>
             `;
