@@ -1068,27 +1068,74 @@ function exportAllDays() {
 
 // 全局匯入功能：接收 Gemini 回傳的 JSON
 function importAllDays() {
-    const userInput = prompt("請貼上從 Gemini 獲得的優化後 JSON：");
-    if (!userInput) return;
+    // 1. 建立背景遮罩
+    const overlay = document.createElement('div');
+    overlay.id = 'gemini-import-overlay';
+    overlay.style = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85); z-index: 9999;
+        display: flex; align-items: center; justify-content: center;
+        padding: 20px; box-sizing: border-box;
+    `;
 
-    try {
-        const importedData = JSON.parse(userInput);
-        importedData.forEach((importedDay, dIdx) => {
-            if (itineraryData[dIdx]) {
-                importedDay.schedule.forEach((importedItem, sIdx) => {
-                    if (itineraryData[dIdx].schedule[sIdx]) {
-                        // 只更新描述與營業時間
-                        itineraryData[dIdx].schedule[sIdx].desc = importedItem.desc || "";
-                        itineraryData[dIdx].schedule[sIdx].hours = importedItem.hours || "";
-                    }
-                });
-            }
-        });
-        alert("✅ 資料已載入記憶體！請進入編輯模式並儲存以同步至 Firebase。");
-        loadDay(currentDayIndex); 
-    } catch (e) {
-        alert("格式錯誤，請確保是完整的 JSON。");
-    }
+    // 2. 建立輸入視窗
+    overlay.innerHTML = `
+        <div style="background: white; width: 100%; max-width: 800px; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <div style="padding: 15px 20px; background: #f8f9fa; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; color: #2c3e50; font-size: 18px;">📥 貼上 Gemini 完整 JSON 資料</h3>
+                <button onclick="document.getElementById('gemini-import-overlay').remove()" style="background:none; border:none; font-size: 24px; cursor: pointer; color: #95a5a6;">&times;</button>
+            </div>
+            
+            <div style="padding: 20px;">
+                <p style="font-size: 13px; color: #7f8c8d; margin-top: 0;">請將 Gemini 回傳的代碼完整貼在下方（支援超長文字）：</p>
+                <textarea id="gemini-import-textarea" placeholder="在此貼上 [ { ... } ] 格式的資料" 
+                    style="width: 100%; height: 400px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.5; resize: none; box-sizing: border-box; outline: none;"></textarea>
+            </div>
+
+            <div style="padding: 15px 20px; background: #f8f9fa; border-top: 1px solid #eee; text-align: right;">
+                <button id="gemini-cancel-btn" style="padding: 10px 20px; border: 1px solid #ccc; background: white; border-radius: 6px; cursor: pointer; margin-right: 10px;">取消</button>
+                <button id="gemini-confirm-btn" style="padding: 10px 20px; border: none; background: #009688; color: white; border-radius: 6px; cursor: pointer; font-weight: bold;">確認匯入資料</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // 取消事件
+    document.getElementById('gemini-cancel-btn').onclick = () => overlay.remove();
+
+    // 匯入處理事件
+    document.getElementById('gemini-confirm-btn').onclick = function() {
+        const rawValue = document.getElementById('gemini-import-textarea').value.trim();
+        if (!rawValue) return alert("內容不能為空");
+
+        try {
+            const importedData = JSON.parse(rawValue);
+            
+            // 開始對應更新 itineraryData
+            importedData.forEach((importedDay, dIdx) => {
+                if (itineraryData[dIdx]) {
+                    importedDay.schedule.forEach((importedItem, sIdx) => {
+                        if (itineraryData[dIdx].schedule[sIdx]) {
+                            // 覆蓋描述與營業時間
+                            itineraryData[dIdx].schedule[sIdx].desc = importedItem.desc || "";
+                            itineraryData[dIdx].schedule[sIdx].hours = importedItem.hours || "";
+                        }
+                    });
+                }
+            });
+
+            alert("✅ 資料已成功加載至記憶體！\n請進入當天編輯模式點擊「儲存」以寫入雲端。");
+            overlay.remove();
+            
+            // 刷新當前畫面
+            if (typeof loadDay === 'function') loadDay(currentDayIndex);
+            
+        } catch (error) {
+            console.error("JSON 解析出錯:", error);
+            alert("❌ 格式解析失敗！請確保貼上的是完整的 [ ] 陣列格式，且沒有被截斷。");
+        }
+    };
 }
 
 // 10. Global Function Exposures
