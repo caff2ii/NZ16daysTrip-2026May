@@ -12,7 +12,7 @@ getRedirectResult(auth).then((result) => {
 });
 
 onAuthStateChanged(auth, (user) => {
-    // 1. 設定你的專屬 UID (絕對不要改錯，否則連你也進不去)
+    // 1. 設定你的專屬 UID
     const adminUID = "eECs2vvipQM0QZTP8UpTUk5Lq7o2"; 
     
     // 2. 獲取頁面上的 UI 元素
@@ -31,38 +31,44 @@ onAuthStateChanged(auth, (user) => {
         if (statusText) statusText.innerText = `管理員模式：${user.displayName || '已開啟'}`;
         if (loginBtn) loginBtn.innerText = "登出管理員";
         
-        // 顯示只有管理員能用的功能 (例如重置按鈕)
-        if (resetBtn) resetBtn.style.display = "block";
+        // --- 新增：插入匯出匯入按鈕到頂部 Admin Bar ---
+        // 檢查是否已經加過按鈕，避免重複產生
+        if (!document.getElementById('gemini-admin-tools')) {
+            const adminTools = document.createElement('span');
+            adminTools.id = 'gemini-admin-tools';
+            adminTools.style = "margin-left: 10px; display: inline-flex; gap: 5px; vertical-align: middle;";
+            adminTools.innerHTML = `
+                <button onclick="window.exportAllDays()" class="admin-top-btn" style="background:#673ab7;">📤 匯出</button>
+                <button onclick="window.importAllDays()" class="admin-top-btn" style="background:#009688;">📥 匯入</button>
+            `;
+            // 插入在「管理員模式：XXX」文字後面
+            if (statusText) statusText.appendChild(adminTools);
+        }
         
-        // 登入後自動關閉彈窗
+        if (resetBtn) resetBtn.style.display = "block";
         if (modal) modal.style.display = 'none';
         
     } else if (user) {
-        // --- 情況 B: 有人登入，但 UID 不對 (非法用戶) ---
-        console.warn("⚠️ 非授權用戶嘗試登入，UID:", user.uid);
-        
-        alert("此帳號未經授權，無法編輯此行程。");
-        
-        // 強制登出非管理員帳號，保持系統純淨
+        // --- 情況 B: 非授權用戶 ---
+        console.warn("⚠️ 非授權用戶嘗試登入");
+        alert("此帳號未經授權。");
         signOut(auth).then(() => {
-            if (statusText) statusText.innerText = "訪客模式 (唯讀)";
-            if (loginBtn) loginBtn.innerText = "管理員登入";
-            if (resetBtn) resetBtn.style.display = "none";
-            location.reload(); // 重新整理確保權限重置
+            location.reload();
         });
         
     } else {
-        // --- 情況 C: 未登入狀態 (訪客) ---
+        // --- 情況 C: 訪客模式 ---
         console.log("ℹ️ 訪客模式");
-        
-        if (statusText) statusText.innerText = "訪客模式 (唯讀)";
+        if (statusText) {
+            statusText.innerText = "訪客模式 (唯讀)";
+            // 登出時移除按鈕
+            const tools = document.getElementById('gemini-admin-tools');
+            if (tools) tools.remove();
+        }
         if (loginBtn) loginBtn.innerText = "管理員登入";
         if (resetBtn) resetBtn.style.display = "none";
     }
 
-    // 4. 無論狀態如何，重新載入當前天數
-    // 這是為了讓 renderViewMode() 內的 if (auth.currentUser) 判斷生效
-    // 從而顯示或隱藏「編輯整日行程」的按鈕
     if (typeof loadDay === 'function') {
         loadDay(currentDayIndex);
     }
@@ -1038,11 +1044,63 @@ function generateEditHeader(data) {
     `;
 }
 
+// 全局導出功能：產出 JSON 給 Gemini
+function exportAllDays() {
+    if (!itineraryData) return alert("資料尚未加載");
+    
+    const exportData = itineraryData.map(day => ({
+        day: day.day,
+        title: day.title,
+        schedule: day.schedule.map((item, sIdx) => ({
+            id: `D${day.day}-S${sIdx}`, // 固定 ID 確保回填精準
+            text: item.text,
+            type: item.type,
+            desc: item.desc || "",   // 匯出原有描述參考
+            hours: item.hours || ""  // 匯出原有時間參考
+        }))
+    }));
+
+    const jsonStr = JSON.stringify(exportData, null, 2);
+    navigator.clipboard.writeText(jsonStr).then(() => {
+        alert("📊 全行程資料已複製！\n請貼給 Gemini 並要求它優化內容。");
+    });
+}
+
+// 全局匯入功能：接收 Gemini 回傳的 JSON
+function importAllDays() {
+    const userInput = prompt("請貼上從 Gemini 獲得的優化後 JSON：");
+    if (!userInput) return;
+
+    try {
+        const importedData = JSON.parse(userInput);
+        importedData.forEach((importedDay, dIdx) => {
+            if (itineraryData[dIdx]) {
+                importedDay.schedule.forEach((importedItem, sIdx) => {
+                    if (itineraryData[dIdx].schedule[sIdx]) {
+                        // 只更新描述與營業時間
+                        itineraryData[dIdx].schedule[sIdx].desc = importedItem.desc || "";
+                        itineraryData[dIdx].schedule[sIdx].hours = importedItem.hours || "";
+                    }
+                });
+            }
+        });
+        alert("✅ 資料已載入記憶體！請進入編輯模式並儲存以同步至 Firebase。");
+        loadDay(currentDayIndex); 
+    } catch (e) {
+        alert("格式錯誤，請確保是完整的 JSON。");
+    }
+}
+
 // 10. Global Function Exposures
 // 登入與權限控制 (新增)
 window.openLoginModal = openLoginModal;
 window.closeLoginModal = closeLoginModal;
 window.handleLoginSubmit = handleLoginSubmit;
+
+// --- 新增：Gemini 批量處理功能 ---
+window.exportAllDays = exportAllDays;
+window.importAllDays = importAllDays;
+// ----------------------------
 
 // 原有的行程編輯功能
 window.saveDayEdit = saveDayEdit;
