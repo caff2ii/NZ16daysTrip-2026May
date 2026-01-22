@@ -292,3 +292,17 @@ input[type="number"]::-webkit-outer-spin-button {
 .stay-info {
     flex-shrink: 1;
 }
+
+/* 讓 Admin Bar 的按鈕與文字並排縮放 */
+#gemini-admin-tools {
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.admin-top-btn {
+    padding: 2px 6px;
+    font-size: 10px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.3);
+}
