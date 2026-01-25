@@ -25,7 +25,7 @@ const provider = new GoogleAuthProvider(); // 初始化 Google 提供商
 
 // Export functions for use in main.js
 export { 
-    db, ref, set, onValue, 
+    db, ref, set, onValue, get,
     auth, provider, 
     signInWithPopup, 
     signInWithRedirect, 
