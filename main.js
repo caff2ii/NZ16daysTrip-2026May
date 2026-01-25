@@ -229,14 +229,12 @@ async function init() {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
     currentLayerGroup = L.layerGroup().addTo(map);
 
-    // 2. 分別定義具體路徑 (避開根目錄 '/')
+    // 2. 分別定義具體路徑
     const itineraryRef = ref(db, 'itinerary');
     const coordsRef = ref(db, 'coords');
     const coordNamesRef = ref(db, 'coordNames');
 
-    // 3. 使用 get 一次性抓取初始化資料 (或用 onValue 分別監聽)
     try {
-        // 同時抓取三個路徑的數據
         const [itiSnap, coordsSnap, namesSnap] = await Promise.all([
             get(itineraryRef),
             get(coordsRef),
@@ -258,16 +256,17 @@ async function init() {
             saveToFirebase();
         }
 
-        // 隱藏連線中文字
-        const statusText = document.getElementById('auth-status');
-        if (statusText) statusText.innerText = "已連線";
+        // --- 修改這裡：不要覆蓋 innerText ---
+        console.log("📡 Firebase 連線狀態: 已連線"); 
+        // ----------------------------------
 
         renderNav();
         loadDay(currentDayIndex);
 
-        // 4. 開啟即時監聽 (如果有其他人同時編輯)
+        // 4. 開啟即時監聽
         onValue(itineraryRef, (snapshot) => {
             if (!isEditingMode && snapshot.exists()) {
+                console.log("🔄 偵測到雲端更新");
                 itineraryData = snapshot.val();
                 loadDay(currentDayIndex);
             }
@@ -275,7 +274,9 @@ async function init() {
 
     } catch (error) {
         console.error("Firebase 讀取錯誤:", error);
-        document.getElementById('auth-status').innerText = "連線失敗: 權限不足";
+        // 只有出錯時才顯示文字提醒
+        const statusText = document.getElementById('auth-status');
+        if (statusText) statusText.innerText = "連線失敗: 權限不足";
     }
 }
 
