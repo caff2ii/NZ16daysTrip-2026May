@@ -224,51 +224,69 @@ let dragSrcEl = null; // for drag & drop
 
 // --- 3. 初始化 ---
 function init() {
-    // Map Setup
+    // Map Setup (保持不變)
     map = L.map('map').setView([-43.5321, 172.6362], 7);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
     currentLayerGroup = L.layerGroup().addTo(map);
 
-    // Firebase Realtime Listener
-    // 當資料庫有變動，或初次載入時觸發
-    const dataRef = ref(db, '/');
-    onValue(dataRef, (snapshot) => {
+    // 修改：明確監聽具體路徑，不要監聽 '/'
+    // 如果你的資料是散落在根目錄，建議改為監聽各個子路徑
+    const itineraryRef = ref(db, 'itinerary');
+    const coordsRef = ref(db, 'coords');
+    const coordNamesRef = ref(db, 'coordNames');
+
+    // 這裡我們用一個簡單的邏輯：監聽行程，並同時抓取其他資料
+    onValue(ref(db, '/'), (snapshot) => {
         const data = snapshot.val();
         
         if (data && data.itinerary) {
-            // 資料庫有資料
             itineraryData = data.itinerary;
             coords = data.coords || defaultCoords;
             coordNames = data.coordNames || defaultCoordNames;
-            console.log("Firebase data loaded/updated");
+            console.log("✅ Firebase 數據同步完成");
+            
+            // 隱藏「正在連線」提示
+            const statusText = document.getElementById('auth-status');
+            if (statusText && statusText.innerText.includes("連線至資料庫")) {
+                statusText.innerText = "已連線";
+            }
         } else {
-            // 資料庫是空的 (第一次使用)，寫入預設值
             console.log("Database empty, initializing defaults...");
             itineraryData = JSON.parse(JSON.stringify(defaultItinerary));
             coords = JSON.parse(JSON.stringify(defaultCoords));
             coordNames = JSON.parse(JSON.stringify(defaultCoordNames));
-            saveToFirebase(); // 寫入資料庫
+            saveToFirebase();
         }
 
         renderNav();
-        // 如果正在編輯模式，不要強制重刷避免輸入中斷，除非是外部更新
         if (!isEditingMode) {
-            // 正常狀態：直接載入當天介面
             loadDay(currentDayIndex);
         } else {
-            // 編輯模式中：只更新下拉選單
             updateMapKeySelects(); 
         }
+    }, (error) => {
+        // 加入錯誤處理，看看是不是權限拒絕
+        console.error("Firebase 連線出錯:", error);
+        document.getElementById('auth-status').innerText = "權限拒絕或連線失敗";
     });
 }
 
 // --- 4. 核心功能: Firebase 存取 ---
 function saveToFirebase() {
-    set(ref(db, '/'), {
-        itinerary: itineraryData,
-        coords: coords,
-        coordNames: coordNames
-    }).catch(err => console.error("Firebase Save Error:", err));
+    // 使用物件形式局部更新，而不是覆寫 Root
+    const updates = {
+        'itinerary': itineraryData,
+        'coords': coords,
+        'coordNames': coordNames
+    };
+    
+    // 這裡可以使用 update 代替 set (如果 import 了 update)
+    // 或者繼續用 set 但指定路徑
+    set(ref(db, 'itinerary'), itineraryData);
+    set(ref(db, 'coords'), coords);
+    set(ref(db, 'coordNames'), coordNames)
+    .then(() => console.log("☁️ 雲端同步成功"))
+    .catch(err => console.error("Firebase Save Error:", err));
 }
 
 // 暴露給 window 的重置功能
