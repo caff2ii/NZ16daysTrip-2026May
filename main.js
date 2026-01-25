@@ -1,4 +1,4 @@
-import { db, ref, set, onValue, auth, provider, signInWithRedirect, getRedirectResult, signInWithPopup, onAuthStateChanged, signOut } from './firebase-config.js';
+import { db, ref, set, onValue, get, auth, provider, signInWithRedirect, getRedirectResult, signInWithPopup, onAuthStateChanged, signOut } from './firebase-config.js';
 
 // --- 完整管理員權限控制邏輯 ---
 
