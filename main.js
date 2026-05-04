@@ -325,19 +325,36 @@ function loadDay(index) {
     currentDayIndex = index;
     isEditingMode = false;
     
-    // Active Tab
+    // 1. 處理 Tab 活化狀態
     document.querySelectorAll('.nav-btn').forEach((btn, i) => {
         btn.classList.toggle('active', i === index);
     });
 
+    // 2. 渲染畫面
     renderViewMode();
     
-    // Map
+    // 3. 獲取當天資料
     const data = itineraryData[index];
-    if(data) updateMapWithRouting(data.route, data.color);
+    
+    if (data) {
+        // 4. 更新地圖路徑
+        updateMapWithRouting(data.route, data.color);
 
-    // 每次切換日期時，自動更新天氣
-    updateWeatherInfo(data);
+        // 5. 【關鍵修改】：準備天氣所需的資料包
+        // 判斷是否有前一天，若無（第一天）則昨日與今日相同
+        const yesterdayData = index > 0 ? itineraryData[index - 1] : itineraryData[index];
+
+        const weatherPayload = {
+            date: data.date,               // 當天日期
+            stay: data.Lodging,            // 今日住宿地點名稱
+            stayMapKey: data.MapKey,       // 今日住宿 MapKey
+            prevStay: yesterdayData.Lodging,    // 昨日住宿地點名稱
+            prevStayMapKey: yesterdayData.MapKey // 昨日住宿 MapKey
+        };
+
+        // 6. 執行更新天氣（傳入整合後的資料包）
+        updateWeatherInfo(weatherPayload);
+    }
 }
 
 function renderViewMode() {
