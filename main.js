@@ -335,6 +335,9 @@ function loadDay(index) {
     // Map
     const data = itineraryData[index];
     if(data) updateMapWithRouting(data.route, data.color);
+
+    // 每次切換日期時，自動更新天氣
+    updateWeatherInfo(data);
 }
 
 function renderViewMode() {
@@ -517,6 +520,62 @@ function addMinutesToTime(timeStr, minutesToAdd) {
     return `${h}:${m}`;
 }
 
+// 函數 A：負責抓取 API 並渲染天氣看板
+async function updateWeatherInfo(data) {
+    const weatherDiv = document.getElementById('weather-display');
+    if (!weatherDiv) return;
+
+    // 取得當天的目的地名稱與座標 Key
+    const stayName = (data.stay || "").trim();
+    const stayMapKey = data.stayMapKey || Object.keys(coordNames).find(key => coordNames[key] === stayName);
+
+    if (stayMapKey && coords[stayMapKey]) {
+        const { lat, lng } = coords[stayMapKey];
+        // 取得當天日期 (格式: YYYY-MM-DD)，若 data 無日期則預設 2026-05-10
+        const travelDate = data.date || "2026-05-10"; 
+
+        try {
+            const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=sunrise,sunset&hourly=temperature_2m&timezone=auto&start_date=${travelDate}&end_date=${travelDate}`);
+            const resData = await response.json();
+            
+            const sunrise = resData.daily.sunrise[0].split('T')[1];
+            const sunset = resData.daily.sunset[0].split('T')[1];
+            const tempAM = resData.hourly.temperature_2m[8] + "°C";
+            const tempPM = resData.hourly.temperature_2m[13] + "°C";
+            const tempNight = resData.hourly.temperature_2m[20] + "°C";
+
+            weatherDiv.innerHTML = `
+                <div style="background: linear-gradient(135deg, #6c5ce7, #8e44ad); color: white; padding: 15px; border-radius: 12px; margin: 10px; box-shadow: 0 4px 15px rgba(108, 92, 231, 0.2); font-family: 'Noto Sans TC', sans-serif;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 15px; font-weight: bold;">📍 ${stayName}</span>
+                        <span style="font-size: 12px; background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px;">
+                            🌅 ${sunrise} | 🌇 ${sunset}
+                        </span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; text-align: center;">
+                        <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px;">
+                            <div style="font-size: 10px; opacity: 0.8; margin-bottom: 4px;">上午 08:00</div>
+                            <div style="font-size: 14px; font-weight: bold;">${tempAM}</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px;">
+                            <div style="font-size: 10px; opacity: 0.8; margin-bottom: 4px;">中午 13:00</div>
+                            <div style="font-size: 14px; font-weight: bold;">${tempPM}</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px;">
+                            <div style="font-size: 10px; opacity: 0.8; margin-bottom: 4px;">晚上 20:00</div>
+                            <div style="font-size: 14px; font-weight: bold;">${tempNight}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } catch (e) {
+            weatherDiv.innerHTML = `<div style="padding:10px; color:#666; font-size:12px;">⚠️ 天氣連線中...</div>`;
+        }
+    } else {
+        weatherDiv.innerHTML = ""; 
+    }
+}
+
 // --- 6. 編輯模式 ---
 
 function startEditMode() {
@@ -526,6 +585,10 @@ function startEditMode() {
     const prevDayData = currentDayIndex > 0 ? itineraryData[currentDayIndex - 1] : null;
     const contentDiv = document.getElementById('itinerary-content');
 
+    // 進入編輯模式時，隱藏天氣看板
+    const weatherDiv = document.getElementById('weather-display');
+    if (weatherDiv) weatherDiv.style.display = 'none';
+    
     // 工具函數：根據名稱反向搜尋 MapKey
     const findMapKeyByName = (name) => {
         if (!name) return "";
