@@ -524,47 +524,48 @@ function startEditMode() {
     const data = itineraryData[currentDayIndex];
     const contentDiv = document.getElementById('itinerary-content');
    
-    // --- 自動處理起終點住宿 ---
-    // 複製數據，避免在按下「儲存」前更動到原始展示數據
+    // --- 1. 數據處理：自動從「今日/前日」的住宿配置抓取資料 ---
     let editSchedule = JSON.parse(JSON.stringify(data.schedule));
 
-    // 自動加前一晚 (若定義了且列表開頭不是它)
+    // 自動加「前一晚住宿」作為起點 (抓取 prevStay 系列資料)
     if (data.prevStay && data.prevStay.trim() !== "") {
         if (editSchedule.length === 0 || editSchedule[0].text !== data.prevStay) {
             editSchedule.unshift({
                 time: "08:00", 
                 type: "hotel", 
-                text: data.prevStay, 
-                stayMinutes: 0, 
+                text: data.prevStay,                      // 名稱
+                stayMinutes: 0,                           // 強制 0 分鐘
                 desc: "從前一晚住宿出發", 
-                mapKey: ""
+                mapKey: data.prevStayMapKey || "",        // 自動抓取地圖定位
+                link: "" 
             });
         }
     }
 
-    // 自動加當晚 (若定義了且列表結尾不是它)
+    // 自動加「當晚住宿」作為終點 (抓取 stay 系列資料)
     if (data.stay && data.stay.trim() !== "") {
         if (editSchedule.length === 0 || editSchedule[editSchedule.length - 1].text !== data.stay) {
             editSchedule.push({
                 time: "18:00", 
                 type: "hotel", 
-                text: data.stay, 
-                stayMinutes: 0, 
+                text: data.stay,                         // 名稱
+                stayMinutes: 0,                          // 強制 0 分鐘
                 desc: "抵達今晚住宿", 
-                mapKey: ""
+                mapKey: data.stayMapKey || "",           // 自動抓取地圖定位
+                link: data.stayLink || ""                // 自動抓取連結
             });
         }
     }
 
-    // --- UI 構建 (加入 Sticky 懸浮按鈕區) ---
+    // --- 2. 構建 HTML (包含懸浮按鈕區與住宿配置顯示) ---
     let html = `
         <div class="edit-controls" style="position: sticky; top: 0; background: white; z-index: 1000; padding: 10px 0; border-bottom: 2px solid #ddd; margin-bottom: 10px;">
             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <button class="btn-main btn-cancel" style="flex:1" onclick="window.loadDay(${currentDayIndex})">取消</button>
-                <button class="btn-main btn-save" style="flex:2" onclick="window.saveDayEdit()">💾 儲存所有變更</button>
+                <button class="btn-main btn-cancel" style="flex:1" onclick="loadDay(${currentDayIndex})">取消</button>
+                <button class="btn-main btn-save" style="flex:2" onclick="saveDayEdit()">💾 儲存所有變更</button>
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
-                <button class="btn-main" style="flex:1" onclick="window.autoFillTraffic()">🚗 自動計算車程</button>
+                <button class="btn-main" style="flex:1; background: #27ae60;" onclick="autoFillTraffic()">🚗 自動計算車程</button>
                 <span id="sync-status" style="font-size: 12px; color: #27ae60; font-weight: bold; opacity: 0; transition: opacity 0.5s;"></span>
             </div>
         </div>
@@ -573,29 +574,40 @@ function startEditMode() {
 
         <div style="background:#f9f9f9; padding:10px; border-radius:5px; margin-bottom:15px;">
             <label style="font-size:12px; font-weight:bold;">標題</label>
-            <input type="text" id="edit-day-title" value="${data.title}" class="input-full" style="margin-bottom:5px;">
-            <label style="font-size:12px; font-weight:bold;">前一晚住宿</label>
-            <input type="text" id="edit-prev-stay" value="${data.prevStay || ''}" class="input-full" style="margin-bottom:5px;">
-            <label style="font-size:12px; font-weight:bold;">當晚住宿</label>
-            <input type="text" id="edit-stay" value="${data.stay || ''}" class="input-full" style="margin-bottom:5px;">
+            <input type="text" id="edit-day-title" value="${data.title}" class="input-full" style="margin-bottom:8px;">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <label style="font-size:12px; font-weight:bold;">🏠 前一晚住宿</label>
+                    <input type="text" id="edit-prev-stay" value="${data.prevStay || ''}" class="input-full">
+                    <input type="hidden" id="edit-prevStayMapKey" value="${data.prevStayMapKey || ''}">
+                </div>
+                <div>
+                    <label style="font-size:12px; font-weight:bold;">🛌 當晚住宿</label>
+                    <input type="text" id="edit-stay" value="${data.stay || ''}" class="input-full">
+                    <input type="hidden" id="edit-stayMapKey" value="${data.stayMapKey || ''}">
+                    <input type="hidden" id="edit-stayLink" value="${data.stayLink || ''}">
+                </div>
+            </div>
         </div>
 
         <div id="edit-list-container">
     `;
 
-    // 渲染每一行
+    // 渲染每一行 (使用處理過的 editSchedule)
     editSchedule.forEach((item, idx) => {
         html += generateEditRow(item, idx);
     });
 
     html += `</div>
-        <button class="btn-add-row" onclick="window.addEditRow()">+ 新增行程項目</button>
+        <button class="btn-add-row" onclick="addEditRow()">+ 新增行程項目</button>
         <p style="font-size:11px; color:#888; text-align:center; margin-top:10px;">💡 提示：按住左側把手可拖曳排序</p>
     `;
 
     contentDiv.innerHTML = html;
     enableDragAndDrop();
 }
+
 function generateEditRow(item, idx) {
     const options = generateLocOptions(item.mapKey);
     const displayDrive = window.formatDriveTime(item.drive || '');
