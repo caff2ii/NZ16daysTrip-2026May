@@ -530,14 +530,23 @@ async function updateWeatherInfo(data) {
     const stayMapKey = data.stayMapKey || Object.keys(coordNames).find(key => coordNames[key] === stayName);
 
     if (stayMapKey && coords[stayMapKey]) {
-        const { lat, lng } = coords[stayMapKey];
-        // 取得當天日期 (格式: YYYY-MM-DD)，若 data 無日期則預設 2026-05-10
-        const travelDate = data.date || "2026-05-10"; 
+        // --- 【修改 1】：修正解構語法，從陣列 [lat, lng] 取值 ---
+        const [lat, lng] = coords[stayMapKey]; 
+        
+        // 取得當天日期 (格式: 10/5/2026)
+        const rawDate = data.date || "10/05/2026"; 
 
         try {
+            // --- 【修改 2】：將 D/M/YYYY 轉換為 API 要求的 YYYY-MM-DD ---
+            const dateParts = rawDate.split('/');
+            const travelDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+
             const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=sunrise,sunset&hourly=temperature_2m&timezone=auto&start_date=${travelDate}&end_date=${travelDate}`);
             const resData = await response.json();
             
+            // 檢查 API 回傳是否正常
+            if (!resData.daily || !resData.hourly) throw new Error("API data error");
+
             const sunrise = resData.daily.sunrise[0].split('T')[1];
             const sunset = resData.daily.sunset[0].split('T')[1];
             const tempAM = resData.hourly.temperature_2m[8] + "°C";
@@ -568,8 +577,11 @@ async function updateWeatherInfo(data) {
                     </div>
                 </div>
             `;
+            // 確保顯示
+            weatherDiv.style.display = 'block'; 
         } catch (e) {
-            weatherDiv.innerHTML = `<div style="padding:10px; color:#666; font-size:12px;">⚠️ 天氣連線中...</div>`;
+            console.error("天氣 API 錯誤:", e);
+            weatherDiv.innerHTML = `<div style="padding:10px; color:#666; font-size:12px;">⚠️ 無法取得 ${stayName} 的天氣資訊</div>`;
         }
     } else {
         weatherDiv.innerHTML = ""; 
