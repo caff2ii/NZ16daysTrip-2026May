@@ -534,46 +534,130 @@ function addMinutesToTime(timeStr, minutesToAdd) {
 }
 
 // --- 【新增輔助函數】：將 API 數字代碼轉換為天氣描述 ---
-function getWeatherIcon(code) {
-    if (code === 0) return "☀️ 晴朗";
-    if (code === 1 || code === 2 || code === 3) return "⛅ 多雲";
-    if (code >= 51 && code <= 67) return "🌧️ 有雨";
-    if (code >= 71 && code <= 77) return "❄️ 下雪";
-    if (code >= 95 && code <= 99) return "⛈️ 雷雨";
-    return "☁️ 陰天";
+function getWeatherMeta(code) {
+    if (code === 0) return { icon:"☀️", text:"晴朗", type:"clear" };
+    if (code === 1) return { icon:"🌤️", text:"大致晴朗", type:"clear" };
+    if (code === 2) return { icon:"⛅", text:"部分多雲", type:"cloud" };
+    if (code === 3) return { icon:"☁️", text:"多雲", type:"cloud" };
+    if (code === 45 || code === 48) return { icon:"🌫️", text:"霧", type:"fog" };
+    if (code >= 51 && code <= 57) return { icon:"🌦️", text:"毛毛雨", type:"rain" };
+    if (code >= 61 && code <= 67) return { icon:"🌧️", text:"降雨", type:"rain" };
+    if (code >= 80 && code <= 82) return { icon:"🌦️", text:"陣雨", type:"rain" };
+    if (code >= 71 && code <= 77) return { icon:"❄️", text:"降雪", type:"snow" };
+    if (code === 95) return { icon:"⛈️", text:"雷暴", type:"storm" };
+    if (code >= 96) return { icon:"⛈️", text:"強雷暴/冰雹", type:"storm" };
+    return { icon:"❓", text:"未知", type:"unknown" };
 }
 
 // --- 【修改 1】：更新 fetchWeatherData，攔截「超過預測範圍」的錯誤 ---
 async function fetchWeatherData(lat, lng, dateStr) {
     try {
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=sunrise,sunset,weathercode&hourly=temperature_2m&timezone=auto&start_date=${dateStr}&end_date=${dateStr}`;
-        const res = await fetch(url);
         
+        const res = await fetch(url);
+
+        // ❗ API error handling
         if (!res.ok) {
-            const errorJson = await res.json();
-            // 如果 API 說超過日期範圍，我們回傳一個特殊標記
-            if (errorJson.reason && errorJson.reason.includes("out of allowed range")) {
+            let errorJson = {};
+            try {
+                errorJson = await res.json();
+            } catch (e) {}
+
+            if (errorJson?.reason?.includes("out of allowed range")) {
                 return { isOutOfRange: true };
             }
+
             throw new Error("API 回應失敗");
         }
-        
+
         const json = await res.json();
+
+        const weatherCode = json?.daily?.weathercode?.[0];
+        const hourly = json?.hourly?.temperature_2m;
+
+        if (!weatherCode || !hourly) {
+            throw new Error("資料不完整");
+        }
+
+        const meta = getWeatherMeta(weatherCode);
+
         return {
-            sunrise: json.daily.sunrise[0].split('T')[1],
-            sunset: json.daily.sunset[0].split('T')[1],
-            weather: getWeatherIcon(json.daily.weathercode[0]),
-            tempAM: Math.round(json.hourly.temperature_2m[8]) + "°C",
-            tempPM: Math.round(json.hourly.temperature_2m[13]) + "°C",
-            tempNight: Math.round(json.hourly.temperature_2m[20]) + "°C",
+            // 🌅 日出日落
+            sunrise: json.daily.sunrise[0]?.split('T')[1] || "--",
+            sunset: json.daily.sunset[0]?.split('T')[1] || "--",
+
+            // 🌤️ 天氣（升級版 object）
+            weather: meta.text,
+            icon: meta.icon,
+            type: meta.type,
+
+            // 🌡️ 溫度（安全 fallback）
+            tempAM: hourly[8] != null ? Math.round(hourly[8]) + "°C" : "--",
+            tempPM: hourly[13] != null ? Math.round(hourly[13]) + "°C" : "--",
+            tempNight: hourly[20] != null ? Math.round(hourly[20]) + "°C" : "--",
         };
+
     } catch (e) {
         console.error("天氣抓取錯誤:", e);
-        return null; // 其他錯誤回傳 null
+        return null;
     }
 }
 
-// --- 【修改 2】：更新 updateWeatherInfo 裡面的 buildWeatherCard ---
+function getWeatherStyle(type) {
+    switch (type) {
+        case "clear":
+            return {
+                bg: "linear-gradient(135deg,#e0f2fe,#bae6fd)",
+                border: "rgba(59,130,246,0.3)",
+                shadow: "0 10px 25px rgba(59,130,246,0.15)"
+            };
+        case "cloud":
+            return {
+                bg: "linear-gradient(135deg,#f5f5f5,#e5e5e5)",
+                border: "rgba(0,0,0,0.08)",
+                shadow: "0 8px 20px rgba(0,0,0,0.08)"
+            };
+        case "rain":
+            return {
+                bg: "linear-gradient(135deg,#dbeafe,#93c5fd)",
+                border: "rgba(37,99,235,0.3)",
+                shadow: "0 10px 25px rgba(37,99,235,0.2)"
+            };
+        case "snow":
+            return {
+                bg: "linear-gradient(135deg,#f0f9ff,#e0f2fe)",
+                border: "rgba(125,211,252,0.4)",
+                shadow: "0 10px 25px rgba(125,211,252,0.2)"
+            };
+        case "storm":
+            return {
+                bg: "linear-gradient(135deg,#1f2937,#374151)",
+                border: "rgba(255,255,255,0.15)",
+                shadow: "0 12px 30px rgba(0,0,0,0.5)"
+            };
+        case "fog":
+            return {
+                bg: "linear-gradient(135deg,#e5e7eb,#d1d5db)",
+                border: "rgba(0,0,0,0.05)",
+                shadow: "0 8px 20px rgba(0,0,0,0.1)"
+            };
+        default:
+            return {
+                bg: "linear-gradient(135deg,#f3f4f6,#e5e7eb)",
+                border: "rgba(0,0,0,0.1)",
+                shadow: "0 8px 20px rgba(0,0,0,0.1)"
+            };
+    }
+}
+
+function getWeatherWarning(type) {
+    if (type === "rain") return "🌧️ 注意降雨，路面濕滑";
+    if (type === "storm") return "⛈️ 雷暴風險，避免戶外活動";
+    if (type === "snow") return "❄️ 可能積雪 / 路面結冰";
+    if (type === "fog") return "🌫️ 能見度低，駕駛小心";
+    return null;
+}
+
 async function updateWeatherInfo(data) {
     const weatherDiv = document.getElementById('weather-display');
     if (!weatherDiv) return;
@@ -583,17 +667,18 @@ async function updateWeatherInfo(data) {
     const dateParts = rawDate.split('/');
     const travelDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
 
+    // 2. key → coords
     const stayKey = data.stayMapKey;
     const prevKey = data.prevStayMapKey;
 
-    let prevWeather = null;
-    let stayWeather = null;
-
     const getCoords = (key) => coords?.[key];
-    
+
     const stayCoords = getCoords(stayKey);
     const prevCoords = getCoords(prevKey);
-    
+
+    let stayWeather = null;
+    let prevWeather = null;
+
     if (stayCoords) {
         stayWeather = await fetchWeatherData(
             stayCoords[0],
@@ -601,7 +686,7 @@ async function updateWeatherInfo(data) {
             travelDate
         );
     }
-    
+
     if (prevCoords) {
         prevWeather = await fetchWeatherData(
             prevCoords[0],
@@ -610,62 +695,132 @@ async function updateWeatherInfo(data) {
         );
     }
 
-    // 3. 漸變色美化版卡片
-    const buildWeatherCard = (title, name, weather, isToday) => {
-        // --- 配色方案 ---
-        // 今日：淺藍色漸變，配深藍文字
-        // 昨日：淺灰色漸變，配深灰文字
-        const bg = isToday 
-            ? "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)" 
-            : "linear-gradient(135deg, #f5f5f5 0%, #e5e5e5 100%)";
-        const textColor = isToday ? "#0369a1" : "#444";
-        const subTextColor = isToday ? "#075985" : "#666";
-        const boxBg = isToday ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.05)";
+    // 3. card builder（用你已有 style + warning）
+    const buildWeatherCard = (name, weather, isToday) => {
+
+        const style = getWeatherStyle(weather?.type);
+        const warning = getWeatherWarning(weather?.type);
+
+        const textColor = weather?.type === "storm" ? "#fff" : "#111";
+        const boxBg = weather?.type === "storm"
+            ? "rgba(255,255,255,0.1)"
+            : "rgba(255,255,255,0.4)";
+
         const label = isToday ? "今日抵達" : "昨日出發";
 
         if (!weather || weather.isOutOfRange) {
-            const msg = weather?.isOutOfRange ? "🔮 預報範圍外" : "❓ 暫無資料";
             return `
-                <div style="flex:1; background:${bg}; border-radius:15px; padding:15px; text-align:center; color:${textColor}; border:1px solid rgba(0,0,0,0.05); min-width:0;">
-                    <div style="font-size:11px; font-weight:bold; opacity:0.7;">${label}</div>
-                    <div style="font-size:14px; font-weight:900; margin:8px 0;">${name || '未知'}</div>
-                    <div style="font-size:12px; font-weight:bold;">${msg}</div>
-                </div>`;
+                <div style="
+                    flex:1;
+                    background:${style.bg};
+                    border-radius:15px;
+                    padding:15px;
+                    text-align:center;
+                    color:${textColor};
+                    border:1px solid ${style.border};
+                    min-width:0;
+                ">
+                    <div style="font-size:11px;font-weight:bold;opacity:0.7;">
+                        ${label}
+                    </div>
+                    <div style="font-size:14px;font-weight:900;margin:8px 0;">
+                        ${name || '未知'}
+                    </div>
+                    <div style="font-size:12px;font-weight:bold;">
+                        ❓ 暫無資料
+                    </div>
+                </div>
+            `;
         }
 
         return `
-            <div style="flex:1; background:${bg}; border-radius:15px; padding:15px; text-align:center; color:${textColor}; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); border:1px solid rgba(255,255,255,0.5); min-width:0;">
-                <div style="font-size:11px; font-weight:bold; opacity:0.8; letter-spacing:1px; margin-bottom:4px;">${label}</div>
-                <div style="font-size:15px; font-weight:900; margin-bottom:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${name}">${name}</div>
-                
-                <div style="font-size:22px; margin-bottom:10px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.1));">${weather.weather}</div>
-                
-                <div style="background:${boxBg}; border-radius:20px; padding:4px 10px; margin-bottom:12px; font-size:11px; display:inline-flex; gap:10px; font-weight:bold;">
+            <div style="
+                flex:1;
+                background:${style.bg};
+                border-radius:15px;
+                padding:15px;
+                text-align:center;
+                color:${textColor};
+                box-shadow:${style.shadow};
+                border:1px solid ${style.border};
+                min-width:0;
+            ">
+
+                <div style="font-size:11px;font-weight:bold;opacity:0.8;letter-spacing:1px;">
+                    ${label}
+                </div>
+
+                <div style="
+                    font-size:15px;
+                    font-weight:900;
+                    margin:8px 0 10px;
+                    white-space:nowrap;
+                    overflow:hidden;
+                    text-overflow:ellipsis;
+                " title="${name}">
+                    ${name}
+                </div>
+
+                <div style="font-size:26px;margin-bottom:6px;">
+                    ${weather.icon} ${weather.weather}
+                </div>
+
+                ${warning ? `
+                    <div style="
+                        font-size:11px;
+                        margin-bottom:8px;
+                        font-weight:600;
+                        opacity:0.9;
+                    ">
+                        ${warning}
+                    </div>
+                ` : ""}
+
+                <div style="
+                    background:${boxBg};
+                    border-radius:20px;
+                    padding:4px 10px;
+                    margin-bottom:12px;
+                    font-size:11px;
+                    display:inline-flex;
+                    gap:10px;
+                    font-weight:bold;
+                ">
                     <span>🌅 ${weather.sunrise}</span>
                     <span>🌇 ${weather.sunset}</span>
                 </div>
-                
-                <div style="display:flex; justify-content:space-between; gap:6px;">
-                    <div style="flex:1; background:${boxBg}; border-radius:10px; padding:6px 0;">
-                        <div style="font-size:10px; opacity:0.8;">早</div>
-                        <div style="font-size:13px; font-weight:900;">${weather.tempAM}</div>
+
+                <div style="display:flex;gap:6px;">
+                    <div style="flex:1;background:${boxBg};border-radius:10px;padding:6px 0;">
+                        <div style="font-size:10px;opacity:0.8;">早</div>
+                        <div style="font-size:13px;font-weight:900;">${weather.tempAM}</div>
                     </div>
-                    <div style="flex:1; background:${boxBg}; border-radius:10px; padding:6px 0;">
-                        <div style="font-size:10px; opacity:0.8;">午</div>
-                        <div style="font-size:13px; font-weight:900;">${weather.tempPM}</div>
+                    <div style="flex:1;background:${boxBg};border-radius:10px;padding:6px 0;">
+                        <div style="font-size:10px;opacity:0.8;">午</div>
+                        <div style="font-size:13px;font-weight:900;">${weather.tempPM}</div>
                     </div>
-                    <div style="flex:1; background:${boxBg}; border-radius:10px; padding:6px 0;">
-                        <div style="font-size:10px; opacity:0.8;">晚</div>
-                        <div style="font-size:13px; font-weight:900;">${weather.tempNight}</div>
+                    <div style="flex:1;background:${boxBg};border-radius:10px;padding:6px 0;">
+                        <div style="font-size:10px;opacity:0.8;">晚</div>
+                        <div style="font-size:13px;font-weight:900;">${weather.tempNight}</div>
                     </div>
                 </div>
-            </div>`;
+
+            </div>
+        `;
     };
 
+    // 4. render
     weatherDiv.innerHTML = `
-        <div style="display:flex; gap:15px; width:100%; box-sizing:border-box; margin:15px 0; padding:5px;">
-            ${buildWeatherCard(null, data.prevStay, prevWeather, false)}
-            ${buildWeatherCard(null, data.stay, stayWeather, true)}
+        <div style="
+            display:flex;
+            gap:15px;
+            width:100%;
+            box-sizing:border-box;
+            margin:15px 0;
+            padding:5px;
+        ">
+            ${buildWeatherCard(data.prevStay, prevWeather, false)}
+            ${buildWeatherCard(data.stay, stayWeather, true)}
         </div>
     `;
 }
