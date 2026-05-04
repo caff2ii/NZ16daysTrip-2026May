@@ -582,82 +582,90 @@ async function updateWeatherInfo(data) {
     const weatherDiv = document.getElementById('weather-display');
     if (!weatherDiv) return;
 
+    // 1. 日期處理
     const rawDate = data.date || "10/05/2026";
     const dateParts = rawDate.split('/');
     const travelDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
 
-    const findKey = (name, existingKey) => {
-        if (existingKey && coords[existingKey]) return existingKey;
-        return Object.keys(coordNames).find(k => coordNames[k] === name) || null;
+    // 2. 地點匹配邏輯 (加強版)
+    const findKey = (name) => {
+        if (!name) return null;
+        const cleanName = name.trim();
+        // 優先從 coordNames 找 Key
+        let key = Object.keys(coordNames).find(k => coordNames[k] === cleanName);
+        if (!key && coords[cleanName]) key = cleanName;
+        return key;
     };
 
-    const prevName = data.prevStay || "無資料";
-    const prevKey = findKey(prevName, data.prevStayMapKey);
-    const stayName = data.stay || "無資料";
-    const stayKey = findKey(stayName, data.stayMapKey);
+    const prevKey = findKey(data.prevStay);
+    const stayKey = findKey(data.stay);
 
     let prevWeather = null;
     let stayWeather = null;
 
-    if (prevKey && Array.isArray(coords[prevKey])) {
+    if (prevKey && coords[prevKey]) {
         prevWeather = await fetchWeatherData(coords[prevKey][0], coords[prevKey][1], travelDate);
     }
-    if (stayKey && Array.isArray(coords[stayKey])) {
+    if (stayKey && coords[stayKey]) {
         stayWeather = await fetchWeatherData(coords[stayKey][0], coords[stayKey][1], travelDate);
     }
 
+    // 3. 漸變色美化版卡片
     const buildWeatherCard = (title, name, weather, isToday) => {
-        const cardBg = isToday 
-            ? "linear-gradient(135deg, #6c5ce7, #4834d4)" 
-            : "linear-gradient(135deg, #444, #222)";
-        
+        // --- 配色方案 ---
+        // 今日：淺藍色漸變，配深藍文字
+        // 昨日：淺灰色漸變，配深灰文字
+        const bg = isToday 
+            ? "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)" 
+            : "linear-gradient(135deg, #f5f5f5 0%, #e5e5e5 100%)";
+        const textColor = isToday ? "#0369a1" : "#444";
+        const subTextColor = isToday ? "#075985" : "#666";
+        const boxBg = isToday ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.05)";
+        const label = isToday ? "今日抵達" : "昨日出發";
+
         if (!weather || weather.isOutOfRange) {
-            const msg = weather?.isOutOfRange ? "超過預報範圍" : "暫無資料";
+            const msg = weather?.isOutOfRange ? "🔮 預報範圍外" : "❓ 暫無資料";
             return `
-                <div style="flex:1; background:${cardBg}; border-radius:12px; padding:12px; text-align:center; min-width:0;">
-                    <div style="font-size:10px; opacity:0.8; margin-bottom:4px;">${title}</div>
-                    <div style="font-size:13px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${name}</div>
-                    <div style="font-size:11px; color:#f1c40f; margin-top:10px;">${msg}</div>
+                <div style="flex:1; background:${bg}; border-radius:15px; padding:15px; text-align:center; color:${textColor}; border:1px solid rgba(0,0,0,0.05); min-width:0;">
+                    <div style="font-size:11px; font-weight:bold; opacity:0.7;">${label}</div>
+                    <div style="font-size:14px; font-weight:900; margin:8px 0;">${name || '未知'}</div>
+                    <div style="font-size:12px; font-weight:bold;">${msg}</div>
                 </div>`;
         }
-        
+
         return `
-            <div style="flex:1; background:${cardBg}; border-radius:12px; padding:12px; text-align:center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); min-width:0;">
-                <div style="font-size:10px; opacity:0.8; text-transform:uppercase; margin-bottom:2px;">${title}</div>
-                <div style="font-size:14px; font-weight:bold; margin-bottom:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#fff;">${name}</div>
+            <div style="flex:1; background:${bg}; border-radius:15px; padding:15px; text-align:center; color:${textColor}; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); border:1px solid rgba(255,255,255,0.5); min-width:0;">
+                <div style="font-size:11px; font-weight:bold; opacity:0.8; letter-spacing:1px; margin-bottom:4px;">${label}</div>
+                <div style="font-size:15px; font-weight:900; margin-bottom:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${name}">${name}</div>
                 
-                <div style="font-size:16px; margin-bottom:8px;">${weather.weather}</div>
+                <div style="font-size:22px; margin-bottom:10px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.1));">${weather.weather}</div>
                 
-                <div style="display:flex; justify-content:center; gap:8px; font-size:10px; margin-bottom:10px; background:rgba(0,0,0,0.2); padding:4px; border-radius:10px;">
+                <div style="background:${boxBg}; border-radius:20px; padding:4px 10px; margin-bottom:12px; font-size:11px; display:inline-flex; gap:10px; font-weight:bold;">
                     <span>🌅 ${weather.sunrise}</span>
                     <span>🌇 ${weather.sunset}</span>
                 </div>
                 
-                <div style="display:flex; justify-content:space-between; gap:4px;">
-                    <div style="flex:1; background:rgba(255,255,255,0.1); padding:4px 0; border-radius:6px;">
-                        <div style="font-size:9px; opacity:0.7;">早</div>
-                        <div style="font-size:11px; font-weight:bold;">${weather.tempAM}</div>
+                <div style="display:flex; justify-content:space-between; gap:6px;">
+                    <div style="flex:1; background:${boxBg}; border-radius:10px; padding:6px 0;">
+                        <div style="font-size:10px; opacity:0.8;">早</div>
+                        <div style="font-size:13px; font-weight:900;">${weather.tempAM}</div>
                     </div>
-                    <div style="flex:1; background:rgba(255,255,255,0.1); padding:4px 0; border-radius:6px;">
-                        <div style="font-size:9px; opacity:0.7;">午</div>
-                        <div style="font-size:11px; font-weight:bold;">${weather.tempPM}</div>
+                    <div style="flex:1; background:${boxBg}; border-radius:10px; padding:6px 0;">
+                        <div style="font-size:10px; opacity:0.8;">午</div>
+                        <div style="font-size:13px; font-weight:900;">${weather.tempPM}</div>
                     </div>
-                    <div style="flex:1; background:rgba(255,255,255,0.1); padding:4px 0; border-radius:6px;">
-                        <div style="font-size:9px; opacity:0.7;">晚</div>
-                        <div style="font-size:11px; font-weight:bold;">${weather.tempNight}</div>
+                    <div style="flex:1; background:${boxBg}; border-radius:10px; padding:6px 0;">
+                        <div style="font-size:10px; opacity:0.8;">晚</div>
+                        <div style="font-size:13px; font-weight:900;">${weather.tempNight}</div>
                     </div>
                 </div>
-            </div>
-        `;
+            </div>`;
     };
 
-    // 這裡加入了 width: 100% 和 box-sizing 確保不會超出範圍
     weatherDiv.innerHTML = `
-        <div style="width:100%; margin:15px 0; box-sizing:border-box;">
-            <div style="display:flex; gap:10px; width:100%;">
-                ${buildWeatherCard('昨日出發', prevName, prevWeather, false)}
-                ${buildWeatherCard('今日抵達', stayName, stayWeather, true)}
-            </div>
+        <div style="display:flex; gap:15px; width:100%; box-sizing:border-box; margin:15px 0; padding:5px;">
+            ${buildWeatherCard(null, data.prevStay, prevWeather, false)}
+            ${buildWeatherCard(null, data.stay, stayWeather, true)}
         </div>
     `;
 }
