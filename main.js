@@ -530,64 +530,64 @@ function getWeatherIcon(code) {
     return "☁️ 陰天";
 }
 
-// --- 【新增輔助函數】：專門負責向 API 抓取並回傳乾淨的數據 ---
+// --- 【修改 1】：更新 fetchWeatherData，攔截「超過預測範圍」的錯誤 ---
 async function fetchWeatherData(lat, lng, dateStr) {
     try {
-        // 加入 weathercode 來判斷天氣狀況
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=sunrise,sunset,weathercode&hourly=temperature_2m&timezone=auto&start_date=${dateStr}&end_date=${dateStr}`;
         const res = await fetch(url);
-        if (!res.ok) throw new Error("API 回應失敗");
+        
+        if (!res.ok) {
+            const errorJson = await res.json();
+            // 如果 API 說超過日期範圍，我們回傳一個特殊標記
+            if (errorJson.reason && errorJson.reason.includes("out of allowed range")) {
+                return { isOutOfRange: true };
+            }
+            throw new Error("API 回應失敗");
+        }
         
         const json = await res.json();
         return {
             sunrise: json.daily.sunrise[0].split('T')[1],
             sunset: json.daily.sunset[0].split('T')[1],
             weather: getWeatherIcon(json.daily.weathercode[0]),
-            // 抓取早上 08:00, 中午 13:00, 晚上 20:00 的溫度
             tempAM: Math.round(json.hourly.temperature_2m[8]) + "°C",
             tempPM: Math.round(json.hourly.temperature_2m[13]) + "°C",
             tempNight: Math.round(json.hourly.temperature_2m[20]) + "°C",
         };
     } catch (e) {
         console.error("天氣抓取錯誤:", e);
-        return null;
+        return null; // 其他錯誤回傳 null
     }
 }
 
-// --- 【大幅修改】：取代原有的 updateWeatherInfo ---
+// --- 【修改 2】：更新 updateWeatherInfo 裡面的 buildWeatherCard ---
 async function updateWeatherInfo(data) {
     const weatherDiv = document.getElementById('weather-display');
     if (!weatherDiv) return;
 
-    // 顯示載入中的提示
     weatherDiv.innerHTML = `<div style="text-align:center; color:#888; padding:10px; font-size:12px;">⏳ 正在為您計算沿途天氣與日照時間...</div>`;
 
-    // 1. 安全地處理日期格式 (將 10/5/2026 轉為 API 需要的 2026-05-10)
     const rawDate = data.date || "10/05/2026";
     const dateParts = rawDate.split('/');
     if (dateParts.length < 3) {
-        weatherDiv.innerHTML = ""; return; // 日期格式錯誤則跳過
+        weatherDiv.innerHTML = ""; return; 
     }
     const travelDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
 
-    // 2. 尋找 MapKey 的小工具
     const findKey = (name, existingKey) => {
         if (existingKey && coords[existingKey]) return existingKey;
         return Object.keys(coordNames).find(k => coordNames[k] === name) || null;
     };
 
-    // 3. 獲取「琴日住宿」與「今日住宿」的名稱與 Key
     const prevName = data.prevStay || "無資料";
     const prevKey = findKey(prevName, data.prevStayMapKey);
     
     const stayName = data.stay || "無資料";
     const stayKey = findKey(stayName, data.stayMapKey);
 
-    // 4. 同時抓取兩地的天氣資料
     let prevWeather = null;
     let stayWeather = null;
 
-    // 確保 coords 存在且為陣列 [lat, lng] 才發送請求 (解決 400 Bad Request 核心問題)
     if (prevKey && Array.isArray(coords[prevKey])) {
         prevWeather = await fetchWeatherData(coords[prevKey][0], coords[prevKey][1], travelDate);
     }
@@ -595,20 +595,32 @@ async function updateWeatherInfo(data) {
         stayWeather = await fetchWeatherData(coords[stayKey][0], coords[stayKey][1], travelDate);
     }
 
-    // 5. 渲染兩個卡片 UI
+    // <--- 核心修改：在渲染卡片時，加入對「超過範圍」的判斷 --->
     const buildWeatherCard = (title, name, weather, isToday) => {
         const bgColor = isToday ? "rgba(108, 92, 231, 0.4)" : "rgba(255,255,255,0.15)";
         const borderColor = isToday ? "border: 1px solid #a29bfe;" : "";
 
+        // 情境 1：超過 14 天的預測範圍
+        if (weather && weather.isOutOfRange) {
+            return `
+                <div style="flex:1; background:${bgColor}; ${borderColor} border-radius:8px; padding:10px; text-align:center; display:flex; flex-direction:column; justify-content:center;">
+                    <div style="font-size:11px; opacity:0.8; margin-bottom:4px; text-transform:uppercase;">📍 ${title}</div>
+                    <div style="font-size:14px; font-weight:bold; margin-bottom:5px; color:#fff;">${name}</div>
+                    <div style="font-size:12px; color:#f39c12; margin-top:8px;">🔮 日期較遠，超過 14 天預報極限</div>
+                </div>`;
+        }
+
+        // 情境 2：完全找不到座標或發生其他網路錯誤
         if (!weather) {
             return `
                 <div style="flex:1; background:${bgColor}; ${borderColor} border-radius:8px; padding:10px; text-align:center; display:flex; flex-direction:column; justify-content:center;">
-                    <div style="font-size:11px; opacity:0.8; margin-bottom:4px;">📍 ${title}</div>
+                    <div style="font-size:11px; opacity:0.8; margin-bottom:4px; text-transform:uppercase;">📍 ${title}</div>
                     <div style="font-size:14px; font-weight:bold; margin-bottom:5px; color:#fff;">${name}</div>
-                    <div style="font-size:12px; color:#ccc;">無座標或天氣資料</div>
+                    <div style="font-size:12px; color:#ccc; margin-top:8px;">無座標或天氣資料</div>
                 </div>`;
         }
         
+        // 情境 3：正常顯示天氣
         return `
             <div style="flex:1; background:${bgColor}; ${borderColor} border-radius:8px; padding:12px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                 <div style="font-size:11px; opacity:0.9; margin-bottom:4px; text-transform:uppercase;">📍 ${title}</div>
@@ -632,7 +644,6 @@ async function updateWeatherInfo(data) {
         `;
     };
 
-    // 組合並塞入網頁
     weatherDiv.innerHTML = `
         <div style="background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); font-family: 'Noto Sans TC', sans-serif;">
             <div style="display:flex; gap:12px;">
