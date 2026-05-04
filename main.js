@@ -523,16 +523,50 @@ function startEditMode() {
     isEditingMode = true;
     const data = itineraryData[currentDayIndex];
     const contentDiv = document.getElementById('itinerary-content');
+   
+    // --- 自動處理起終點住宿 ---
+    // 複製數據，避免在按下「儲存」前更動到原始展示數據
+    let editSchedule = JSON.parse(JSON.stringify(data.schedule));
 
+    // 自動加前一晚 (若定義了且列表開頭不是它)
+    if (data.prevStay && data.prevStay.trim() !== "") {
+        if (editSchedule.length === 0 || editSchedule[0].text !== data.prevStay) {
+            editSchedule.unshift({
+                time: "08:00", 
+                type: "hotel", 
+                text: data.prevStay, 
+                stayMinutes: 0, 
+                desc: "從前一晚住宿出發", 
+                mapKey: ""
+            });
+        }
+    }
+
+    // 自動加當晚 (若定義了且列表結尾不是它)
+    if (data.stay && data.stay.trim() !== "") {
+        if (editSchedule.length === 0 || editSchedule[editSchedule.length - 1].text !== data.stay) {
+            editSchedule.push({
+                time: "18:00", 
+                type: "hotel", 
+                text: data.stay, 
+                stayMinutes: 0, 
+                desc: "抵達今晚住宿", 
+                mapKey: ""
+            });
+        }
+    }
+
+    // --- UI 構建 (加入 Sticky 懸浮按鈕區) ---
     let html = `
-        <div class="edit-controls">
-            <button class="btn-main btn-cancel" onclick="window.loadDay(${currentDayIndex})">取消</button>
-            <button class="btn-main btn-save" onclick="window.saveDayEdit()">💾 儲存所有變更</button>
-        </div>
-
-        <div style="margin: 10px 0; display: flex; gap: 10px;">
-            <button class="btn-main" onclick="window.autoFillTraffic()">🚗 自動計算車程</button>
-            <span id="sync-status" style="font-size: 12px; color: #27ae60; font-weight: bold; opacity: 0; transition: opacity 0.5s;"></span>
+        <div class="edit-controls" style="position: sticky; top: 0; background: white; z-index: 1000; padding: 10px 0; border-bottom: 2px solid #ddd; margin-bottom: 10px;">
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <button class="btn-main btn-cancel" style="flex:1" onclick="window.loadDay(${currentDayIndex})">取消</button>
+                <button class="btn-main btn-save" style="flex:2" onclick="window.saveDayEdit()">💾 儲存所有變更</button>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button class="btn-main" style="flex:1" onclick="window.autoFillTraffic()">🚗 自動計算車程</button>
+                <span id="sync-status" style="font-size: 12px; color: #27ae60; font-weight: bold; opacity: 0; transition: opacity 0.5s;"></span>
+            </div>
         </div>
 
         ${generateEditHeader(data)}
@@ -541,13 +575,16 @@ function startEditMode() {
             <label style="font-size:12px; font-weight:bold;">標題</label>
             <input type="text" id="edit-day-title" value="${data.title}" class="input-full" style="margin-bottom:5px;">
             <label style="font-size:12px; font-weight:bold;">前一晚住宿</label>
-            <input type="text" id="edit-prev-stay" value="${data.prevStay}" class="input-full" style="margin-bottom:5px;">
+            <input type="text" id="edit-prev-stay" value="${data.prevStay || ''}" class="input-full" style="margin-bottom:5px;">
+            <label style="font-size:12px; font-weight:bold;">當晚住宿</label>
+            <input type="text" id="edit-stay" value="${data.stay || ''}" class="input-full" style="margin-bottom:5px;">
         </div>
 
         <div id="edit-list-container">
     `;
 
-    data.schedule.forEach((item, idx) => {
+    // 渲染每一行
+    editSchedule.forEach((item, idx) => {
         html += generateEditRow(item, idx);
     });
 
@@ -596,7 +633,11 @@ function generateEditRow(item, idx) {
                 <input type="text" name="hours" value="${item.hours || ''}" placeholder="開放時間" style="flex: 1.5;">
                 <div style="flex: 1; display: flex; align-items: center; background: #fff3e0; padding: 4px 10px; border-radius: 6px; border: 1px solid #ffcc80; justify-content: center;">
                     <span style="font-size: 12px; color: #e65100; white-space: nowrap; margin-right: 5px;">⏳ 停留</span>
-                    <input type="number" name="stayMinutes" value="${item.stayMinutes || 60}" step="10" style="width: 45px; border: 1px solid #ffcc80; background: white; text-align: center; font-weight: bold; color: #e65100; font-size: 13px; border-radius: 4px;">
+                    <input type="number" 
+                       name="stayMinutes" 
+                       value="${(item.stayMinutes !== undefined && item.stayMinutes !== null) ? item.stayMinutes : 60}" 
+                       step="10" 
+                       style="width: 45px; border: 1px solid #ffcc80; background: white; text-align: center; font-weight: bold; color: #e65100; font-size: 13px; border-radius: 4px;">
                     <span style="font-size: 12px; color: #e65100; margin-left: 5px;">分</span>
                 </div>
             </div>
@@ -661,6 +702,13 @@ function saveDayEdit() {
 
     rows.forEach(row => {
         const mapKey = row.querySelector('[name="mapKey"]').value;
+        
+        // --- 核心修正 1：解決 0 分鐘問題 ---
+        const stayInput = row.querySelector('[name="stayMinutes"]');
+        const stayVal = stayInput ? stayInput.value : "";
+        // 只要不是空字串就轉數字，確保 0 被保留；只有完全沒填才給 60
+        const stayMinutes = stayVal !== "" ? parseInt(stayVal) : 60;
+
         newSchedule.push({
             time: row.querySelector('[name="time"]').value,
             type: row.querySelector('[name="type"]').value,
@@ -668,7 +716,7 @@ function saveDayEdit() {
             desc: row.querySelector('[name="desc"]').value,
             hours: row.querySelector('[name="hours"]').value,
             drive: row.querySelector('[name="drive"]').value,
-            stayMinutes: parseInt(row.querySelector('[name="stayMinutes"]').value) || 0,
+            stayMinutes: stayMinutes, 
             mapKey: mapKey,
             link: row.querySelector('[name="link"]').value
         });
@@ -676,28 +724,39 @@ function saveDayEdit() {
         if(mapKey) newRoute.push(mapKey);
     });
     
+    // 排序行程
     newSchedule.sort((a,b) => a.time.localeCompare(b.time));
 
-    // 在 saveDayEdit 函數內找到 Update Local State 的位置替換：
+    // --- 核心修正 2：更新 Local State (確保所有欄位都被讀取) ---
     const dayData = itineraryData[currentDayIndex];
     dayData.title = document.getElementById('edit-day-title').value;
     dayData.prevStay = document.getElementById('edit-prev-stay').value;
-    dayData.prevStayMapKey = document.getElementById('edit-prevStayMapKey').value;
+    
+    // 這裡要對應你在 startEditMode 加入的住宿欄位 ID
+    // 如果你在 UI 沒加這些 ID 的 input，記得要在 startEditMode 的 HTML 加上去
+    if(document.getElementById('edit-prevStayMapKey')) {
+        dayData.prevStayMapKey = document.getElementById('edit-prevStayMapKey').value;
+    }
+    
     dayData.stay = document.getElementById('edit-stay').value;
-    dayData.stayLink = document.getElementById('edit-stayLink').value;
-    dayData.stayMapKey = document.getElementById('edit-stayMapKey').value;
+    
+    if(document.getElementById('edit-stayLink')) {
+        dayData.stayLink = document.getElementById('edit-stayLink').value;
+    }
+    if(document.getElementById('edit-stayMapKey')) {
+        dayData.stayMapKey = document.getElementById('edit-stayMapKey').value;
+    }
     
     dayData.schedule = newSchedule;
     dayData.route = newRoute;
-    // -----------------------------------
 
-    // Reset Editing Mode Flag
+    // 重置編輯狀態
     isEditingMode = false;
 
-    // Save to Firebase (async)
+    // 儲存至 Firebase
     saveToFirebase();
 
-    // FORCE LOAD DAY IMMEDIATELY - THIS FIXES THE UI LAG
+    // 立即重新載入畫面
     loadDay(currentDayIndex);
     
     console.log("儲存程序完成");
