@@ -583,27 +583,31 @@ async function updateWeatherInfo(data) {
     const dateParts = rawDate.split('/');
     const travelDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
 
-    // 2. 地點匹配邏輯 (加強版)
-    const findKey = (name) => {
-        if (!name) return null;
-        const cleanName = name.trim();
-        // 優先從 coordNames 找 Key
-        let key = Object.keys(coordNames).find(k => coordNames[k] === cleanName);
-        if (!key && coords[cleanName]) key = cleanName;
-        return key;
-    };
-
-    const prevKey = findKey(data.prevStay);
-    const stayKey = findKey(data.stay);
+    const stayKey = data.stayMapKey;
+    const prevKey = data.prevStayMapKey;
 
     let prevWeather = null;
     let stayWeather = null;
 
-    if (prevKey && coords[prevKey]) {
-        prevWeather = await fetchWeatherData(coords[prevKey][0], coords[prevKey][1], travelDate);
+    const getCoords = (key) => coords?.[key];
+    
+    const stayCoords = getCoords(stayKey);
+    const prevCoords = getCoords(prevKey);
+    
+    if (stayCoords) {
+        stayWeather = await fetchWeatherData(
+            stayCoords[0],
+            stayCoords[1],
+            travelDate
+        );
     }
-    if (stayKey && coords[stayKey]) {
-        stayWeather = await fetchWeatherData(coords[stayKey][0], coords[stayKey][1], travelDate);
+    
+    if (prevCoords) {
+        prevWeather = await fetchWeatherData(
+            prevCoords[0],
+            prevCoords[1],
+            travelDate
+        );
     }
 
     // 3. 漸變色美化版卡片
