@@ -520,72 +520,127 @@ function addMinutesToTime(timeStr, minutesToAdd) {
     return `${h}:${m}`;
 }
 
-// 函數 A：負責抓取 API 並渲染天氣看板
+// --- 【新增輔助函數】：將 API 數字代碼轉換為天氣描述 ---
+function getWeatherIcon(code) {
+    if (code === 0) return "☀️ 晴朗";
+    if (code === 1 || code === 2 || code === 3) return "⛅ 多雲";
+    if (code >= 51 && code <= 67) return "🌧️ 有雨";
+    if (code >= 71 && code <= 77) return "❄️ 下雪";
+    if (code >= 95 && code <= 99) return "⛈️ 雷雨";
+    return "☁️ 陰天";
+}
+
+// --- 【新增輔助函數】：專門負責向 API 抓取並回傳乾淨的數據 ---
+async function fetchWeatherData(lat, lng, dateStr) {
+    try {
+        // 加入 weathercode 來判斷天氣狀況
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=sunrise,sunset,weathercode&hourly=temperature_2m&timezone=auto&start_date=${dateStr}&end_date=${dateStr}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("API 回應失敗");
+        
+        const json = await res.json();
+        return {
+            sunrise: json.daily.sunrise[0].split('T')[1],
+            sunset: json.daily.sunset[0].split('T')[1],
+            weather: getWeatherIcon(json.daily.weathercode[0]),
+            // 抓取早上 08:00, 中午 13:00, 晚上 20:00 的溫度
+            tempAM: Math.round(json.hourly.temperature_2m[8]) + "°C",
+            tempPM: Math.round(json.hourly.temperature_2m[13]) + "°C",
+            tempNight: Math.round(json.hourly.temperature_2m[20]) + "°C",
+        };
+    } catch (e) {
+        console.error("天氣抓取錯誤:", e);
+        return null;
+    }
+}
+
+// --- 【大幅修改】：取代原有的 updateWeatherInfo ---
 async function updateWeatherInfo(data) {
     const weatherDiv = document.getElementById('weather-display');
     if (!weatherDiv) return;
 
-    // 取得當天的目的地名稱與座標 Key
-    const stayName = (data.stay || "").trim();
-    const stayMapKey = data.stayMapKey || Object.keys(coordNames).find(key => coordNames[key] === stayName);
+    // 顯示載入中的提示
+    weatherDiv.innerHTML = `<div style="text-align:center; color:#888; padding:10px; font-size:12px;">⏳ 正在為您計算沿途天氣與日照時間...</div>`;
 
-    if (stayMapKey && coords[stayMapKey]) {
-        // --- 【修改 1】：修正解構語法，從陣列 [lat, lng] 取值 ---
-        const [lat, lng] = coords[stayMapKey]; 
-        
-        // 取得當天日期 (格式: 10/5/2026)
-        const rawDate = data.date || "10/05/2026"; 
-
-        try {
-            // --- 【修改 2】：將 D/M/YYYY 轉換為 API 要求的 YYYY-MM-DD ---
-            const dateParts = rawDate.split('/');
-            const travelDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
-
-            const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=sunrise,sunset&hourly=temperature_2m&timezone=auto&start_date=${travelDate}&end_date=${travelDate}`);
-            const resData = await response.json();
-            
-            // 檢查 API 回傳是否正常
-            if (!resData.daily || !resData.hourly) throw new Error("API data error");
-
-            const sunrise = resData.daily.sunrise[0].split('T')[1];
-            const sunset = resData.daily.sunset[0].split('T')[1];
-            const tempAM = resData.hourly.temperature_2m[8] + "°C";
-            const tempPM = resData.hourly.temperature_2m[13] + "°C";
-            const tempNight = resData.hourly.temperature_2m[20] + "°C";
-
-            weatherDiv.innerHTML = `
-                <div style="background: linear-gradient(135deg, #6c5ce7, #8e44ad); color: white; padding: 15px; border-radius: 12px; margin: 10px; box-shadow: 0 4px 15px rgba(108, 92, 231, 0.2); font-family: 'Noto Sans TC', sans-serif;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <span style="font-size: 15px; font-weight: bold;">📍 ${stayName}</span>
-                        <span style="font-size: 12px; background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px;">
-                            🌅 ${sunrise} | 🌇 ${sunset}
-                        </span>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; text-align: center;">
-                        <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px;">
-                            <div style="font-size: 10px; opacity: 0.8; margin-bottom: 4px;">上午 08:00</div>
-                            <div style="font-size: 14px; font-weight: bold;">${tempAM}</div>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px;">
-                            <div style="font-size: 10px; opacity: 0.8; margin-bottom: 4px;">中午 13:00</div>
-                            <div style="font-size: 14px; font-weight: bold;">${tempPM}</div>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px;">
-                            <div style="font-size: 10px; opacity: 0.8; margin-bottom: 4px;">晚上 20:00</div>
-                            <div style="font-size: 14px; font-weight: bold;">${tempNight}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            // 確保顯示
-            weatherDiv.style.display = 'block'; 
-        } catch (e) {
-            console.error("天氣 API 錯誤:", e);
-            weatherDiv.innerHTML = `<div style="padding:10px; color:#666; font-size:12px;">⚠️ 無法取得 ${stayName} 的天氣資訊</div>`;
-        }
-    } else {
-        weatherDiv.innerHTML = ""; 
+    // 1. 安全地處理日期格式 (將 10/5/2026 轉為 API 需要的 2026-05-10)
+    const rawDate = data.date || "10/05/2026";
+    const dateParts = rawDate.split('/');
+    if (dateParts.length < 3) {
+        weatherDiv.innerHTML = ""; return; // 日期格式錯誤則跳過
     }
+    const travelDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+
+    // 2. 尋找 MapKey 的小工具
+    const findKey = (name, existingKey) => {
+        if (existingKey && coords[existingKey]) return existingKey;
+        return Object.keys(coordNames).find(k => coordNames[k] === name) || null;
+    };
+
+    // 3. 獲取「琴日住宿」與「今日住宿」的名稱與 Key
+    const prevName = data.prevStay || "無資料";
+    const prevKey = findKey(prevName, data.prevStayMapKey);
+    
+    const stayName = data.stay || "無資料";
+    const stayKey = findKey(stayName, data.stayMapKey);
+
+    // 4. 同時抓取兩地的天氣資料
+    let prevWeather = null;
+    let stayWeather = null;
+
+    // 確保 coords 存在且為陣列 [lat, lng] 才發送請求 (解決 400 Bad Request 核心問題)
+    if (prevKey && Array.isArray(coords[prevKey])) {
+        prevWeather = await fetchWeatherData(coords[prevKey][0], coords[prevKey][1], travelDate);
+    }
+    if (stayKey && Array.isArray(coords[stayKey])) {
+        stayWeather = await fetchWeatherData(coords[stayKey][0], coords[stayKey][1], travelDate);
+    }
+
+    // 5. 渲染兩個卡片 UI
+    const buildWeatherCard = (title, name, weather, isToday) => {
+        const bgColor = isToday ? "rgba(108, 92, 231, 0.4)" : "rgba(255,255,255,0.15)";
+        const borderColor = isToday ? "border: 1px solid #a29bfe;" : "";
+
+        if (!weather) {
+            return `
+                <div style="flex:1; background:${bgColor}; ${borderColor} border-radius:8px; padding:10px; text-align:center; display:flex; flex-direction:column; justify-content:center;">
+                    <div style="font-size:11px; opacity:0.8; margin-bottom:4px;">📍 ${title}</div>
+                    <div style="font-size:14px; font-weight:bold; margin-bottom:5px; color:#fff;">${name}</div>
+                    <div style="font-size:12px; color:#ccc;">無座標或天氣資料</div>
+                </div>`;
+        }
+        
+        return `
+            <div style="flex:1; background:${bgColor}; ${borderColor} border-radius:8px; padding:12px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size:11px; opacity:0.9; margin-bottom:4px; text-transform:uppercase;">📍 ${title}</div>
+                <div style="font-size:14px; font-weight:bold; margin-bottom:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${name}">${name}</div>
+                
+                <div style="font-size:15px; font-weight:bold; margin-bottom:10px; color:#f1c40f; display:flex; align-items:center; justify-content:center; gap:5px;">
+                    ${weather.weather}
+                </div>
+                
+                <div style="display:flex; justify-content:center; gap:15px; font-size:11px; margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:8px;">
+                    <div>🌅 ${weather.sunrise}</div>
+                    <div>🌇 ${weather.sunset}</div>
+                </div>
+                
+                <div style="display:flex; justify-content:space-between; font-size:12px;">
+                    <div style="background:rgba(0,0,0,0.2); padding:4px 8px; border-radius:4px;"><span style="font-size:10px; opacity:0.8">早</span><br><b>${weather.tempAM}</b></div>
+                    <div style="background:rgba(0,0,0,0.2); padding:4px 8px; border-radius:4px;"><span style="font-size:10px; opacity:0.8">午</span><br><b>${weather.tempPM}</b></div>
+                    <div style="background:rgba(0,0,0,0.2); padding:4px 8px; border-radius:4px;"><span style="font-size:10px; opacity:0.8">晚</span><br><b>${weather.tempNight}</b></div>
+                </div>
+            </div>
+        `;
+    };
+
+    // 組合並塞入網頁
+    weatherDiv.innerHTML = `
+        <div style="background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); font-family: 'Noto Sans TC', sans-serif;">
+            <div style="display:flex; gap:12px;">
+                ${buildWeatherCard('昨日住宿 (出發)', prevName, prevWeather, false)}
+                ${buildWeatherCard('今日住宿 (抵達)', stayName, stayWeather, true)}
+            </div>
+        </div>
+    `;
 }
 
 // --- 6. 編輯模式 ---
