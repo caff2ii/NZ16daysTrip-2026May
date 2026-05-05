@@ -847,14 +847,19 @@ function startEditMode() {
     let editSchedule = JSON.parse(JSON.stringify(data.schedule || []));
 
     // --- 1. 數據自動同步與更新 (Grab Logic) ---
-
+    
     // A. 處理「前一晚住宿」(行程起點)
     const prevName = (data.prevStay || "").trim();
-    const prevMapKey = data.prevStayMapKey || (prevDayData ? prevDayData.stayMapKey : findMapKeyByName(prevName));
+    const prevMapKey =
+        data.prevStayMapKey ||
+        (prevDayData ? prevDayData.stayMapKey : findMapKeyByName(prevName));
     const prevLink = prevDayData ? (prevDayData.stayLink || "") : "";
-
     if (prevName !== "" && prevName !== "飛機上") {
-        if (editSchedule.length > 0 && editSchedule[0].text === prevName) {
+        const firstIsSameStay =
+            editSchedule.length > 0 &&
+            editSchedule[0].type === "hotel" &&
+            (editSchedule[0].text || "").trim() === prevName;
+        if (firstIsSameStay) {
             // 已存在則自動同步資料
             editSchedule[0].mapKey = prevMapKey;
             editSchedule[0].link = prevLink;
@@ -862,20 +867,29 @@ function startEditMode() {
         } else {
             // 不存在則插入
             editSchedule.unshift({
-                time: "08:00", type: "hotel", text: prevName, stayMinutes: 0, 
-                desc: "從前一晚住宿出發", mapKey: prevMapKey, link: prevLink, hours: ""
+                time: "08:00",
+                type: "hotel",
+                text: prevName,
+                stayMinutes: 0,
+                desc: "從前一晚住宿出發",
+                mapKey: prevMapKey,
+                link: prevLink,
+                hours: ""
             });
         }
     }
-
+    
     // B. 處理「當晚住宿」(行程終點)
     const stayName = (data.stay || "").trim();
     const stayMapKey = data.stayMapKey || findMapKeyByName(stayName);
     const stayLink = data.stayLink || "";
-
     if (stayName !== "") {
         const lastIdx = editSchedule.length - 1;
-        if (editSchedule.length > 0 && editSchedule[lastIdx].text === stayName) {
+        const lastIsSameStay =
+            editSchedule.length > 0 &&
+            editSchedule[lastIdx].type === "hotel" &&
+            (editSchedule[lastIdx].text || "").trim() === stayName;
+        if (lastIsSameStay) {
             // 已存在則自動同步資料
             editSchedule[lastIdx].mapKey = stayMapKey;
             editSchedule[lastIdx].link = stayLink;
@@ -883,8 +897,14 @@ function startEditMode() {
         } else {
             // 不存在則插入
             editSchedule.push({
-                time: "18:00", type: "hotel", text: stayName, stayMinutes: 0, 
-                desc: "抵達今晚住宿", mapKey: stayMapKey, link: stayLink, hours: ""
+                time: "18:00",
+                type: "hotel",
+                text: stayName,
+                stayMinutes: 0,
+                desc: "抵達今晚住宿",
+                mapKey: stayMapKey,
+                link: stayLink,
+                hours: ""
             });
         }
     }
