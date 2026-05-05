@@ -575,7 +575,7 @@ async function fetchWeatherData(lat, lng, dateStr) {
         const weatherCode = json?.daily?.weathercode?.[0];
         const hourly = json?.hourly?.temperature_2m;
 
-        if (!weatherCode || !hourly) {
+        if (weatherCode === undefined || weatherCode === null || !hourly) {
             throw new Error("資料不完整");
         }
 
