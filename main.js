@@ -278,26 +278,39 @@ async function init() {
         const statusText = document.getElementById('auth-status');
         if (statusText) statusText.innerText = "連線失敗: 權限不足";
     }
-    // Sticky Map Shrink：捲動超過 80px 時地圖縮小
+    // 1. 確保 Leaflet 初始化後尺寸正確
+    setTimeout(() => { if (map) map.invalidateSize(); }, 200);
+    
+    // 2. Sticky Map Shrink
+    // 手機端 sidebar 係獨立 scroll container，要監聽 #sidebar
+    // 桌面端監聽 window（以防萬一）
     (function setupMapShrink() {
-        const SCROLL_THRESHOLD = 80;
+        const THRESHOLD = 60;
         let ticking = false;
     
-        window.addEventListener('scroll', () => {
+        function onScroll(scrollTop) {
             if (!ticking) {
                 requestAnimationFrame(() => {
-                    if (window.scrollY > SCROLL_THRESHOLD) {
+                    if (scrollTop > THRESHOLD) {
                         document.body.classList.add('map-shrunk');
                     } else {
                         document.body.classList.remove('map-shrunk');
                     }
-                    // 告知 Leaflet 重新計算尺寸
                     if (map) map.invalidateSize();
                     ticking = false;
                 });
                 ticking = true;
             }
-        }, { passive: true });
+        }
+    
+        // 監聽 sidebar（手機）
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) {
+            sidebar.addEventListener('scroll', () => onScroll(sidebar.scrollTop), { passive: true });
+        }
+    
+        // 監聽 window（桌面 fallback）
+        window.addEventListener('scroll', () => onScroll(window.scrollY), { passive: true });
     })();
 }
 
