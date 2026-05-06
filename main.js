@@ -278,12 +278,50 @@ async function init() {
         const statusText = document.getElementById('auth-status');
         if (statusText) statusText.innerText = "連線失敗: 權限不足";
     }
-    // 1. 確保 Leaflet 初始化後尺寸正確
-    setTimeout(() => { if (map) map.invalidateSize(); }, 200);
+    // ── 貼在 init() 裡面，loadDay(currentDayIndex); 之後 ──
+
+    // ─────────────────────────────────────────────────
+    // 1. 記住最後一次 route bounds，方便 resize 後 re-fit
+    // ─────────────────────────────────────────────────
+    let _lastRouteBounds = null; // 儲存最後一次 fitBounds 用的 bounds
     
-    // 2. Sticky Map Shrink
-    // 手機端 sidebar 係獨立 scroll container，要監聽 #sidebar
-    // 桌面端監聽 window（以防萬一）
+    // Patch updateMapWithRouting：畫完 route 之後把 bounds 存起來
+    const _origUpdateMap = updateMapWithRouting;
+    // 我們直接 override window 層
+    window._fitLastBounds = function () {
+        if (!map || !_lastRouteBounds) return;
+        try {
+            map.invalidateSize();
+            map.fitBounds(_lastRouteBounds, { padding: [40, 40], animate: true });
+        } catch (e) {}
+    };
+    
+    // ─────────────────────────────────────────────────
+    // 2. ResizeObserver：map container 大小改變時自動 re-fit
+    // ─────────────────────────────────────────────────
+    (function setupMapResize() {
+        const container = document.getElementById('map-container');
+        if (!container || typeof ResizeObserver === 'undefined') return;
+    
+        let resizeTimer = null;
+        const ro = new ResizeObserver(() => {
+            // debounce 150ms，避免動畫過程中頻繁觸發
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                if (!map) return;
+                map.invalidateSize();
+                if (_lastRouteBounds) {
+                    map.fitBounds(_lastRouteBounds, { padding: [40, 40], animate: true });
+                }
+            }, 150);
+        });
+    
+        ro.observe(container);
+    })();
+    
+    // ─────────────────────────────────────────────────
+    // 3. Sticky Map Shrink（捲動時地圖縮小）
+    // ─────────────────────────────────────────────────
     (function setupMapShrink() {
         const THRESHOLD = 60;
         let ticking = false;
@@ -291,27 +329,32 @@ async function init() {
         function onScroll(scrollTop) {
             if (!ticking) {
                 requestAnimationFrame(() => {
-                    if (scrollTop > THRESHOLD) {
-                        document.body.classList.add('map-shrunk');
-                    } else {
-                        document.body.classList.remove('map-shrunk');
+                    const wasShrunk = document.body.classList.contains('map-shrunk');
+                    const shouldShrink = scrollTop > THRESHOLD;
+                    if (wasShrunk !== shouldShrink) {
+                        document.body.classList.toggle('map-shrunk', shouldShrink);
+                        // layout 改了才 invalidate，ResizeObserver 會接手 fitBounds
                     }
-                    if (map) map.invalidateSize();
                     ticking = false;
                 });
                 ticking = true;
             }
         }
     
-        // 監聽 sidebar（手機）
+        // 手機：sidebar 獨立 scroll
         const sidebar = document.getElementById('sidebar');
-        if (sidebar) {
-            sidebar.addEventListener('scroll', () => onScroll(sidebar.scrollTop), { passive: true });
-        }
+        if (sidebar) sidebar.addEventListener('scroll', () => onScroll(sidebar.scrollTop), { passive: true });
     
-        // 監聽 window（桌面 fallback）
+        // 桌面 fallback
         window.addEventListener('scroll', () => onScroll(window.scrollY), { passive: true });
     })();
+    
+    // ─────────────────────────────────────────────────
+    // 4. 視窗方向改變（直／橫屏切換）
+    // ─────────────────────────────────────────────────
+    window.addEventListener('orientationchange', () => {
+        setTimeout(() => window._fitLastBounds && window._fitLastBounds(), 400);
+    });
 }
 
 // --- 4. 核心功能: Firebase 存取 ---
