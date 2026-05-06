@@ -1,352 +1,298 @@
 /* ============================================================
-   NZ16daysTrip — style.css  (Mobile-First 完整優化版)
+   NZ16daysTrip — style.css  完整修正版
    ============================================================ */
 
-/* ---------- 0. CSS Reset & Base ---------- */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 :root {
-  --radius-card: 16px;
+  --radius-card: 14px;
   --radius-sm:   8px;
-  --shadow-card: 0 4px 16px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06);
-  --shadow-sm:   0 2px 8px rgba(0,0,0,0.08);
-  --timeline-dot: 12px;
-  --timeline-line-w: 2px;
-  --color-drive: #eaf3ff;
-  --color-hotel: #eafaf1;
-  --tap-min: 44px;           /* Apple HIG 最小點擊區域 */
+  --shadow-card: 0 4px 16px rgba(0,0,0,0.09), 0 1px 4px rgba(0,0,0,0.05);
+  --shadow-sm:   0 2px 8px rgba(0,0,0,0.07);
+  --tap-min:     44px;
+  --top-bar-h:   88px;   /* admin-bar + nav approx height */
 }
 
-html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+*, *::before, *::after { box-sizing: border-box; }
 
+/* ---------- Base ---------- */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  background: #f0f2f5;
-  color: #2c3e50;
-  line-height: 1.5;
-  overscroll-behavior-y: none;
-}
-
-/* ---------- 1. Top Admin Bar ---------- */
-#top-bar {
-  position: sticky;
-  top: 0;
-  z-index: 900;
+  font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+  margin: 0; padding: 0;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: rgba(44, 62, 80, 0.97);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: #ecf0f1;
-  font-size: 13px;
-  min-height: var(--tap-min);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  flex-direction: column;
+  height: 100vh;
+  background: #f4f7f6;
+  overflow: hidden;         /* desktop: no outer scroll */
 }
 
-#auth-status { flex: 1; font-weight: 600; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-#login-trigger-btn,
-#reset-data-btn {
-  min-height: var(--tap-min);
-  padding: 0 14px;
-  border: none;
-  border-radius: var(--radius-sm);
+/* ---------- Admin Bar ---------- */
+#admin-bar {
+  background: #1a252f;
+  color: white;
+  padding: 5px 15px;
   font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: opacity .15s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  min-height: 34px;
+  z-index: 1002;
 }
-#login-trigger-btn { background: #3498db; color: #fff; }
-#reset-data-btn    { background: #e74c3c; color: #fff; display: none; }
-#login-trigger-btn:active,
-#reset-data-btn:active { opacity: .75; }
 
-/* Admin top buttons (export / import / coord mgr) */
-.admin-top-btn {
-  min-height: 32px;
-  padding: 0 10px;
+#login-trigger-btn {
+  background: #34495e;
+  color: white;
   border: none;
-  border-radius: 6px;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
   cursor: pointer;
-  white-space: nowrap;
+  min-height: 28px;
+  font-size: 12px;
 }
 
-/* ---------- 2. Sticky Map (shrinks on scroll) ---------- */
-#map-container {
-  position: sticky;
-  top: var(--tap-min);          /* below admin bar */
-  z-index: 800;
-  width: 100%;
-  height: 220px;
-  transition: height .3s ease;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+#gemini-admin-tools {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  margin-left: 8px;
+}
+.admin-top-btn {
+  padding: 3px 8px;
+  font-size: 11px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.3);
+  color: white;
+  cursor: pointer;
+  min-height: 26px;
+}
+
+/* ---------- Top Bar (title + nav) ---------- */
+#top-bar {
+  background: #2c3e50;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 1001;
+}
+.header { padding: 8px 20px 4px; text-align: center; }
+.header h1 { margin: 0; font-size: 18px; }
+.header p  { margin: 2px 0 0; font-size: 12px; opacity: .8; }
+
+/* Nav */
+.nav-buttons {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  background: #34495e;
+  padding: 4px 10px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.nav-buttons::-webkit-scrollbar { display: none; }
+
+.nav-btn {
+  flex: 1;
+  min-width: 60px;
+  min-height: var(--tap-min);
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: rgba(255,255,255,.6);
+  padding: 0 5px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all .2s;
+  white-space: nowrap;
+  text-align: center;
+}
+.nav-btn:hover  { color: white; background: rgba(255,255,255,.05); }
+.nav-btn.active { color: #1abc9c; border-bottom-color: #1abc9c; font-weight: bold; background: rgba(255,255,255,.1); }
+
+/* ---------- Main Layout ---------- */
+#main-container {
+  display: flex;
+  flex: 1;
   overflow: hidden;
 }
 
-/* JS adds .map-shrunk to <body> when user scrolls down */
-body.map-shrunk #map-container { height: 100px; }
-
-#map { width: 100%; height: 100%; }
-
-/* ---------- 3. Day Navigation Tab Bar ---------- */
-#nav-wrapper {
-  position: sticky;
-  top: calc(var(--tap-min) + 100px); /* map-shrunk height */
-  z-index: 700;
-  background: #fff;
-  border-bottom: 1px solid #e0e4ea;
-  box-shadow: var(--shadow-sm);
-  transition: top .3s ease;
-}
-
-body:not(.map-shrunk) #nav-wrapper {
-  top: calc(var(--tap-min) + 220px);
-}
-
-#nav-container {
-  display: flex;
-  gap: 4px;
-  padding: 8px 10px;
-  overflow-x: auto;
+/* Sidebar */
+#sidebar {
+  width: 480px;
+  background: white;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-#nav-container::-webkit-scrollbar { display: none; }
-
-.nav-btn {
+  padding-bottom: 40px;
+  border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
   flex-shrink: 0;
-  min-height: var(--tap-min);
-  min-width: 52px;
-  padding: 0 12px;
-  border: 1.5px solid #d0d7e3;
-  border-radius: 24px;
-  background: #fff;
-  color: #5a6a7e;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background .15s, color .15s, border-color .15s, transform .1s;
-  white-space: nowrap;
-}
-.nav-btn:active  { transform: scale(.94); }
-.nav-btn.active  {
-  background: #2c3e50;
-  color: #fff;
-  border-color: #2c3e50;
 }
 
-/* ---------- 4. Main Content Area ---------- */
-#main-content {
-  padding: 12px;
-  max-width: 640px;
-  margin: 0 auto;
+/* ── MAP FIX ──────────────────────────────────────────────
+   #map-container 係 flex child，必須繼承 flex:1 + height
+   #map 填滿 container 即可
+   ────────────────────────────────────────────────────── */
+#map-container {
+  flex: 1;
+  position: relative;       /* Leaflet 需要 positioned parent */
+  min-height: 0;            /* 防止 flex child 撐爆 */
+  transition: height .3s ease;
 }
 
-/* ---------- 5. Weather Card ---------- */
-#weather-display {
-  margin-bottom: 4px;
+#map {
+  position: absolute;       /* 填滿 container */
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
-/* ---------- 6. Day Header Card ---------- */
+/* Shrink on scroll (mobile JS adds .map-shrunk to body) */
+body.map-shrunk #map-container { height: 120px; flex: none; }
+
+/* ---------- Weather ---------- */
+#weather-display { padding: 0 12px; }
+
+/* ---------- Itinerary Content ---------- */
+#itinerary-content { padding: 16px; flex: 1; }
+
+/* ---------- Day Header Card ---------- */
 .day-header {
-  background: #fff;
+  background: #ecf0f1;
+  padding: 14px 16px;
   border-radius: var(--radius-card);
-  padding: 16px;
-  margin-bottom: 12px;
-  box-shadow: var(--shadow-card);
-  border-left: 5px solid var(--day-color, #3498db);
+  margin-bottom: 16px;
+  border-left: 5px solid #1abc9c;
+  box-shadow: var(--shadow-sm);
 }
-.day-header h2 { font-size: 1.25rem; color: #1a2533; }
-
-.stay-info-container { flex-wrap: wrap; }
-.stay-info { font-size: 13px; }
-
-/* ---------- 7. Timeline Layout ---------- */
-#itinerary-content { position: relative; }
-
-/* The vertical line */
-#itinerary-content::before {
-  content: '';
-  position: absolute;
-  left: 18px;
-  top: 0;
-  bottom: 0;
-  width: var(--timeline-line-w);
-  background: linear-gradient(to bottom, #d0d7e3 0%, #b0bec5 100%);
-  border-radius: 2px;
+.stay-info { font-size: 13px; color: #555; margin: 4px 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.stay-info-container { margin-bottom: 12px; }
+.stay-badge {
+  background: #fef5e7; color: #d35400;
+  border: 1px solid #fad7a0;
+  font-size: 11px; padding: 2px 7px;
+  border-radius: 20px; font-weight: 600;
 }
 
-/* ---------- 8. Timeline Item Card ---------- */
+/* ---------- Timeline (vertical) ---------- */
 .timeline-item {
   position: relative;
+  padding: 14px 14px 12px 28px;
+  border-left: 2px solid #e0e0e0;
+  margin-bottom: 14px;
   background: #fff;
-  border-radius: var(--radius-card);
-  padding: 14px 14px 12px 46px;  /* left room for dot */
-  margin-bottom: 8px;
+  border-radius: 0 var(--radius-card) var(--radius-card) 0;
   box-shadow: var(--shadow-card);
-  border: 1px solid rgba(0,0,0,0.04);
-  transition: transform .15s, box-shadow .15s;
+  transition: transform .15s;
 }
-.timeline-item:active { transform: scale(.99); box-shadow: var(--shadow-sm); }
+.timeline-item:active { transform: scale(.99); }
 
-/* Timeline dot */
 .timeline-item::before {
   content: '';
   position: absolute;
-  left: calc(18px - var(--timeline-dot)/2 + var(--timeline-line-w)/2 - 1px);
-  top: 18px;
-  width: var(--timeline-dot);
-  height: var(--timeline-dot);
+  left: -7px; top: 14px;
+  width: 12px; height: 12px;
   border-radius: 50%;
-  background: #fff;
-  border: 2.5px solid #95a5a6;
-  z-index: 1;
+  background: #1abc9c;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px #1abc9c;
 }
+.timeline-item.drive::before  { background: #f39c12; box-shadow: 0 0 0 2px #f39c12; }
+.timeline-item.hotel::before  { background: #9b59b6; box-shadow: 0 0 0 2px #9b59b6; }
 
-/* Dot colour by type */
-.timeline-item.drive::before  { border-color: #3498db; background: #eaf3ff; }
-.timeline-item.hotel::before  { border-color: #27ae60; background: #eafaf1; }
+/* Light tint per type */
+.timeline-item.drive { background: #fffdf5; }
+.timeline-item.hotel { background: #f9f5ff; }
 
-/* Type-specific card tints */
-.timeline-item.drive  { background: var(--color-drive); border-color: rgba(52,152,219,.15); }
-.timeline-item.hotel  { background: var(--color-hotel); border-color: rgba(39,174,96,.12); }
-
-/* ---------- 9. Inside the card ---------- */
+/* Badges */
 .time-badge {
-  display: inline-flex;
-  align-items: center;
-  background: #2c3e50;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 3px 9px;
-  border-radius: 20px;
-  letter-spacing: .5px;
-  white-space: nowrap;
-}
-
-.stay-badge {
-  display: inline-flex;
-  align-items: center;
-  background: #f39c12;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 20px;
-  margin-left: 6px;
-  white-space: nowrap;
+  background: #2c3e50; color: white;
+  padding: 3px 9px; border-radius: 20px;
+  font-size: 12px; font-weight: bold;
+  display: inline-block; margin-right: 5px;
 }
 
 .item-header { display: flex; align-items: center; justify-content: space-between; }
-
-.item-title {
-  font-size: 1rem;
-  font-weight: 700;
-  margin-top: 6px;
-  color: #1a2533;
-  line-height: 1.3;
+.item-title  { font-size: 15px; font-weight: bold; color: #2c3e50; margin-top: 5px; }
+.item-meta   { font-size: 12px; color: #7f8c8d; margin-top: 3px; }
+.item-desc   {
+  font-size: 13px; color: #444; line-height: 1.6;
+  margin-top: 8px; background: #f9f9f9;
+  padding: 8px 10px; border-radius: 8px;
+  border: 1px dashed #ddd;
 }
 
-.item-meta { font-size: 11.5px; color: #7f8c8d; margin-top: 3px; }
-
-.item-desc {
-  margin-top: 8px;
-  font-size: 13.5px;
-  line-height: 1.6;
-  color: #34495e;
-  white-space: pre-line;
-}
-
-/* ---------- 10. Drive Info Chip (between cards) ---------- */
+/* Drive info chip */
 .drive-info {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: rgba(52,152,219,.1);
-  border: 1px solid rgba(52,152,219,.25);
-  border-radius: 20px;
-  padding: 4px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #2471a3;
-  margin-top: 10px;
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-top: 10px; padding: 5px 12px;
+  background: #fdf2e9; color: #e67e22;
+  border-radius: 20px; font-size: 12px;
+  border: 1px solid #fad7a0; font-weight: bold;
 }
 
-/* ---------- 11. Links Row ---------- */
+/* Links row */
 .links-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 12px;
-  border-top: 1px dashed #e8ecf0;
-  padding-top: 10px;
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-top: 10px;
+  border-top: 1px dashed #eee; padding-top: 8px;
 }
 .links-row a {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  display: inline-flex; align-items: center; gap: 4px;
   min-height: var(--tap-min);
-  padding: 0 4px;
-  font-size: 12.5px;
-  font-weight: 600;
-  text-decoration: none;
-  color: #2980b9;
+  font-size: 12px; color: #3498db; text-decoration: none; font-weight: 600;
 }
-.links-row a:last-child {
-  border-left: 1px solid #dfe4ea;
-  padding-left: 10px;
-  color: #e67e22;
-}
+.links-row a:last-child { color: #e67e22; }
 
-/* ---------- 12. Buttons (general) ---------- */
-.btn-main {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--tap-min);
-  padding: 0 18px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: #2c3e50;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity .15s, transform .1s;
-  white-space: nowrap;
+/* Stay link button */
+.stay-link-btn {
+  text-decoration: none; font-size: 12px;
+  background: #e67e22; color: white !important;
+  padding: 4px 10px; border-radius: 6px;
+  font-weight: bold; display: inline-flex; align-items: center;
+  min-height: 28px;
 }
-.btn-main:active  { opacity: .8; transform: scale(.97); }
-.btn-cancel       { background: #95a5a6 !important; }
-.btn-save         { background: #27ae60 !important; }
+.stay-link-btn:hover { background: #d35400; }
+
+/* ---------- Buttons ---------- */
+.btn-main {
+  background: #3498db; color: white;
+  border: none; padding: 0 18px;
+  min-height: var(--tap-min);
+  border-radius: var(--radius-sm);
+  cursor: pointer; font-size: 14px; font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: opacity .15s, transform .1s;
+}
+.btn-main:active { opacity: .8; transform: scale(.97); }
+.btn-save   { background: #27ae60; }
+.btn-cancel { background: #95a5a6; margin-right: 5px; }
 
 .btn-add-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--tap-min);
-  width: 100%;
-  border: 2px dashed #f39c12;
-  border-radius: var(--radius-sm);
-  background: #fffbf2;
-  color: #d68910;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  margin-top: 12px;
+  background: #fff; color: #f39c12;
+  width: 100%; min-height: var(--tap-min);
+  border: 2px dashed #f39c12; border-radius: var(--radius-sm);
+  margin-top: 10px; cursor: pointer;
+  font-size: 14px; font-weight: bold;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
 }
+.btn-add-row:hover { background: #fff9f0; }
 
-/* ---------- 13. Edit Mode Controls (sticky toolbar) ---------- */
+/* Reset btn */
+#reset-data-btn {
+  display: none;
+  width: auto; min-width: 120px;
+  margin: 20px auto;
+  padding: 6px 14px;
+  background: #f2f2f2; color: #a0a0a0;
+  border: 1px solid #ddd; border-radius: 20px;
+  font-size: 11px; cursor: pointer;
+}
+#reset-data-btn:hover { background: #ffeaea; color: #e74c3c; border-color: #fab1a0; }
+
+/* ---------- Edit Mode ---------- */
 .edit-controls {
-  position: sticky;
-  top: 0;
-  z-index: 600;
+  position: sticky; top: 0; z-index: 100;
   background: rgba(255,255,255,.97);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -355,382 +301,201 @@ body:not(.map-shrunk) #nav-wrapper {
   margin-bottom: 12px;
 }
 
-/* ---------- 14. Edit Item Row ---------- */
 .edit-item-row {
-  position: relative;
   background: #fff;
-  border: 1px solid #e0e4ea;
-  border-radius: var(--radius-card);
+  border: 1.5px solid #e0e6ed;
   padding: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  border-radius: var(--radius-card);
+  display: flex; flex-direction: column; gap: 8px;
+  position: relative;
   box-shadow: var(--shadow-sm);
+  transition: border-color .2s;
+}
+.edit-item-row:hover { border-color: #3498db; }
+
+.edit-row-header {
+  display: flex !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  gap: 6px !important;
+  align-items: center;
 }
 
 .row-number-badge {
-  display: inline-block;
-  background: #34495e;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 800;
-  padding: 2px 8px;
-  border-radius: 20px;
-  margin-bottom: 8px;
-  letter-spacing: .5px;
+  position: absolute; top: -10px; left: 14px;
+  background: #34495e; color: white;
+  font-size: 10px; padding: 1px 8px;
+  border-radius: 10px; font-weight: bold; z-index: 5;
 }
 
 .btn-delete-row {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: var(--tap-min);
-  height: var(--tap-min);
-  border: none;
-  background: none;
-  color: #e74c3c;
-  font-size: 22px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
+  position: absolute; top: -8px; right: -8px;
+  background: #e74c3c; color: white;
+  border: 2px solid #fff;
+  width: var(--tap-min); height: var(--tap-min);
+  border-radius: 50%; cursor: pointer;
+  font-size: 18px; font-weight: bold;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
-.btn-delete-row:active { background: #fdecea; }
 
-/* Sort buttons */
+/* Drag */
+.drag-controls {
+  display: flex; align-items: center;
+  background: #f0f2f5;
+  border-radius: 6px; border: 1px solid #ddd;
+  height: 34px; flex-shrink: 0; overflow: hidden;
+}
+.drag-handle {
+  cursor: grab; font-size: 14px; color: #95a5a6;
+  padding: 0 8px;
+  display: flex; align-items: center; height: 100%;
+  border-right: 1px solid #ddd;
+}
+.drag-handle:active { cursor: grabbing; }
 .sort-btn {
-  min-width: 28px;
-  min-height: 28px;
+  width: 28px; height: 100%;
+  border: none; background: transparent;
+  cursor: pointer; font-size: 12px; color: #7f8c8d;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
 }
+.sort-btn:hover { background: #e4e7ed; color: #3498db; }
 
-/* ---------- 15. Form Inputs ---------- */
-.input-full,
-input[type="text"],
-input[type="url"],
-input[type="number"],
-textarea,
-select {
-  width: 100%;
-  height: var(--tap-min);
+/* Inputs inside edit rows */
+.input-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.edit-item-row input,
+.edit-item-row select {
+  height: 36px;
   padding: 0 10px;
-  border: 1.5px solid #dce0e8;
-  border-radius: var(--radius-sm);
-  font-size: 14px;
-  color: #2c3e50;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  font-size: 13px;
+  min-width: 0;
   background: #fff;
-  outline: none;
-  transition: border-color .15s, box-shadow .15s;
-  -webkit-appearance: none;
+  transition: border-color .15s;
 }
-input[type="text"]:focus,
-input[type="url"]:focus,
-textarea:focus,
-select:focus {
-  border-color: #3498db;
-  box-shadow: 0 0 0 3px rgba(52,152,219,.15);
+.edit-item-row input:focus,
+.edit-item-row select:focus { border-color: #3498db; outline: none; }
+
+.input-full { width: 100%; box-sizing: border-box; }
+textarea.input-full {
+  resize: vertical; min-height: 44px;
+  padding: 8px 10px; border-radius: 6px;
+  border: 1px solid #dcdfe6; font-size: 13px;
+  font-family: inherit; line-height: 1.5;
 }
+textarea.input-full:focus { border-color: #3498db; outline: none; }
 
-textarea {
-  height: auto;
-  min-height: 60px;
-  padding: 8px 10px;
-  resize: vertical;
-  line-height: 1.5;
-}
+input[name="text"] { flex: 1 !important; min-width: 0 !important; }
 
-select { padding: 0 30px 0 10px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 0l6 8 6-8z' fill='%23888'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+/* Drive / Link inline boxes */
+.drive-input { color: #2980b9; }
 
-/* ---------- 16. Modal (Login & Location Manager) ---------- */
+/* Number spinner */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { opacity: 1; height: 24px; }
+
+/* ---------- Modals ---------- */
 .modal-overlay {
-  position: fixed;
-  inset: 0;
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.55);
   z-index: 2000;
-  background: rgba(0,0,0,.6);
-  display: flex;
-  align-items: flex-end;      /* slide up from bottom on mobile */
-  justify-content: center;
-  padding: 0;
+  justify-content: center; align-items: center;
 }
-
-@media (min-width: 600px) {
-  .modal-overlay { align-items: center; padding: 20px; }
-}
-
 .modal-content {
-  background: #fff;
-  width: 100%;
-  max-width: 540px;
-  max-height: 90vh;
-  border-radius: var(--radius-card) var(--radius-card) 0 0;
-  overflow-y: auto;
+  background: white; padding: 20px;
+  border-radius: var(--radius-card);
+  width: 92%; max-width: 500px;
+  max-height: 85vh; overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 20px 16px 32px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.3);
 }
-
-@media (min-width: 600px) {
-  .modal-content { border-radius: var(--radius-card); }
+.modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px; border-bottom: 1px solid #eee; padding-bottom: 10px;
 }
-
-/* ---------- 17. Location Manager ---------- */
-#loc-modal { display: none; }
-
+.loc-form {
+  background: #f1f8ff; padding: 12px;
+  border-radius: 8px; margin-bottom: 14px;
+  border: 1px solid #cce5ff;
+}
+.loc-list { font-size: 13px; border-top: 1px solid #eee; }
 .loc-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 0;
-  border-bottom: 1px solid #f0f2f5;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-bottom: 1px solid #eee;
 }
-.loc-details { flex: 1; font-size: 13px; }
+.loc-item:hover { background: #f9f9f9; }
+.loc-details { flex: 1; line-height: 1.5; }
 .loc-actions { display: flex; gap: 4px; }
 .loc-actions button {
-  min-width: var(--tap-min);
-  min-height: var(--tap-min);
-  border: none;
-  background: none;
-  font-size: 18px;
-  cursor: pointer;
-  border-radius: var(--radius-sm);
+  min-width: var(--tap-min); min-height: var(--tap-min);
+  border: none; background: none;
+  font-size: 16px; cursor: pointer; border-radius: 6px;
 }
 .loc-actions button:active { background: #f0f2f5; }
 
-#loc-search {
-  width: 100%;
-  height: var(--tap-min);
-  margin-bottom: 10px;
-}
+.coord-input { width: calc(50% - 4px); }
 
-/* ---------- 18. Scrollbar (desktop) ---------- */
-@media (min-width: 768px) {
-  ::-webkit-scrollbar       { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: #f0f2f5; }
-  ::-webkit-scrollbar-thumb { background: #b0bec5; border-radius: 3px; }
-}
-
-/* ---------- 19. Responsive tweaks (≥ 600px) ---------- */
-@media (min-width: 600px) {
-  #map-container            { height: 300px; }
-  body.map-shrunk #map-container { height: 150px; }
-  .timeline-item            { padding-left: 54px; }
-  #itinerary-content::before{ left: 22px; }
-  .timeline-item::before    { left: calc(22px - var(--timeline-dot)/2 + 1px); }
-}
-
-/* ---------- 20. Utility ---------- */
-.hidden  { display: none !important; }
-.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }    position: relative; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
-    transition: all 0.2s ease;
-    user-select: text;
-}
-
-.edit-item-row:hover { border-color: #3498db; }
-
-/* 橫向排序控制區：整合 ☰, ▲, ▼ */
-.drag-controls {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    background: #f0f2f5;
-    padding: 2px 6px;
-    border-radius: 6px;
-    border: 1px solid #ddd;
-    flex-shrink: 0;
-    overflow: hidden;
-}
-
-.drag-handle { 
-    cursor: grab; 
-    user-select: none; 
-    font-size: 16px; 
-    color: #95a5a6; 
-    padding-right: 5px;
-    border-right: 1px solid #ccc;
-    margin-right: 2px;
-}
-.drag-handle:active { cursor: grabbing; }
-
-.sort-btn {
-    border: none;
-    background: transparent;
-    font-size: 12px !important;
-    padding: 2px 4px;
-    cursor: pointer;
-    color: #7f8c8d;
-    line-height: 1;
-    transition: background 0.2s;
-}
-.sort-btn:hover { color: #3498db; background: #e4e7ed !important; }
-
-/* 輸入框美化與精簡 */
-.input-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.edit-item-row input, .edit-item-row select, .edit-item-row .input-full { 
-    padding: 6px 10px; 
-    border: 1px solid #dcdfe6; 
-    border-radius: 6px; 
-    font-size: 14px; 
-    transition: border-color 0.2s;
-}
-
-.edit-item-row input, 
-.edit-item-row select {
-    height: 32px !important;
-    line-height: 32px;
-    vertical-align: middle;
-    min-width: 0; /* 這是關鍵：防止 input 撐開父容器 */
-}
-
-.input-group input:focus, .input-full:focus {
-    border-color: #3498db;
-    outline: none;
-    background: #fdfdfd;
-}
-
-.input-full { width: 100%; box-sizing: border-box; }
-textarea.input-full { resize: vertical; min-height: 45px; font-family: inherit; }
-
-/* 名稱 input 專門修復 */
-input[name="text"] {
-    flex: 1 !important;
-    min-width: 0 !important;
-}
-
-/* 序號標籤 */
-.row-number-badge {
-    position: absolute;
-    top: -10px;
-    left: 15px;
-    background: #34495e;
-    color: white;
-    font-size: 10px;
-    padding: 1px 8px;
-    border-radius: 10px;
-    font-weight: bold;
-    z-index: 5;
-}
-
-/* 刪除按鈕 */
-.btn-delete-row { 
-    position: absolute; 
-    top: -8px; 
-    right: -8px; 
-    background: #e74c3c; 
-    color: white; 
-    border: 2px solid #fff; 
-    width: 24px; 
-    height: 24px; 
-    border-radius: 50%; 
-    cursor: pointer; 
-    font-size: 14px; 
-    line-height: 20px; 
-    text-align: center; 
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-.btn-add-row { 
-    background: #fff; 
-    color: #f39c12; 
-    width: 100%; 
-    padding: 12px; 
-    border: 2px dashed #f39c12; 
-    border-radius: 10px;
-    margin-top: 10px; 
-    cursor: pointer; 
-    font-size: 15px;
-    font-weight: bold;
-    transition: all 0.2s;
-}
-.btn-add-row:hover { background: #fff9f0; transform: translateY(-2px); }
-
-/* Location Modal */
-.btn-manage-loc { background: #9b59b6; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-left: 5px; white-space: nowrap;}
-.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
-.modal-content { background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-.loc-form { background: #f1f8ff; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #cce5ff; }
-.loc-list { font-size: 12px; border-top: 1px solid #eee; }
-.loc-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
-.loc-item:hover { background: #f9f9f9; }
-.loc-details { flex: 1; }
-.loc-actions button { margin-left: 5px; font-size: 10px; padding: 3px 6px; cursor: pointer; }
-.coord-input { width: calc(50% - 5px); display: inline-block; }
-
-/* Responsive */
+/* ---------- Responsive (Mobile) ---------- */
 @media (max-width: 768px) {
-    #main-container { flex-direction: column-reverse; }
-    #sidebar { width: 100%; height: 50%; }
-    #map { height: 50%; }
-    .nav-buttons { overflow-x: auto; justify-content: start; }
+  body { overflow: hidden; }   /* outer body still locked */
+
+  #main-container {
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* On mobile: map is ON TOP, sidebar scrolls below */
+  #map-container {
+    flex: none;
+    width: 100%;
+    height: 240px;             /* fixed initial height */
+    position: sticky;
+    top: 0;
+    z-index: 500;
+    transition: height .3s ease;
+  }
+
+  /* map MUST fill its container absolutely */
+  #map {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* when JS adds .map-shrunk, collapse map */
+  body.map-shrunk #map-container { height: 100px; }
+
+  #sidebar {
+    width: 100%;
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    border-right: none;
+    border-top: 2px solid #e0e4ea;
+  }
+
+  /* nav tabs bigger tap target on mobile */
+  .nav-btn { min-height: var(--tap-min); font-size: 12px; }
+
+  /* cards full-bleed */
+  .timeline-item { border-radius: 0 10px 10px 0; margin-bottom: 10px; }
+  .day-header    { border-radius: 10px; }
+
+  /* modal slides up from bottom */
+  .modal-content {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    width: 100%; max-width: 100%;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+    max-height: 88vh;
+  }
 }
 
-/* Reset Button Style */
-#reset-data-btn {
-    display: none; 
-    width: auto;   
-    min-width: 120px; 
-    margin: 30px auto; 
-    padding: 6px 12px;
-    background-color: #f2f2f2; 
-    color: #a0a0a0;           
-    border: 1px solid #ddd;
-    border-radius: 20px;      
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
-}
-
-#reset-data-btn:hover {
-    background-color: #ffeaea; 
-    color: #e74c3c;           
-    border-color: #fab1a0;
-}
-
-/* Number Input Arrows */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-    opacity: 1;
-    height: 24px;
-}
-
-/* 住宿連結按鈕樣式 */
-.stay-link-btn {
-    text-decoration: none;
-    font-size: 12px;
-    background: #e67e22; /* 橙色，與 Google Map 的藍色區分 */
-    color: white !important;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-weight: bold;
-    display: inline-flex;
-    align-items: center;
-    transition: background 0.2s;
-    box-shadow: 0 2px 4px rgba(230, 126, 34, 0.2);
-}
-
-.stay-link-btn:hover {
-    background: #d35400;
-}
-
-/* 確保容器在手機上排版正常 */
-.stay-info-container {
-    margin-bottom: 15px;
-}
-
-.stay-info {
-    flex-shrink: 1;
-}
-
-/* 讓 Admin Bar 的按鈕與文字並排縮放 */
-#gemini-admin-tools {
-    display: inline-flex;
-    gap: 5px;
-    align-items: center;
-}
-
-.admin-top-btn {
-    padding: 2px 6px;
-    font-size: 10px;
-    border-radius: 4px;
-    border: 1px solid rgba(255,255,255,0.3);
-}
+/* ---------- Utility ---------- */
+.hidden  { display: none !important; }
