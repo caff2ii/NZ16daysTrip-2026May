@@ -221,6 +221,7 @@ let coordNames = {};
 let currentDayIndex = 0;
 let isEditingMode = false;
 let dragSrcEl = null; // for drag & drop
+let lastRouteBounds = null; // Leaflet LatLngBounds for current day route (used to re-fit after resize)
 
 // --- 3. 初始化 ---
 async function init() {
@@ -278,44 +279,36 @@ async function init() {
         const statusText = document.getElementById('auth-status');
         if (statusText) statusText.innerText = "連線失敗: 權限不足";
     }
-    // ── 貼在 init() 裡面，loadDay(currentDayIndex); 之後 ──
-
     // ─────────────────────────────────────────────────
-    // 1. 記住最後一次 route bounds，方便 resize 後 re-fit
+    // Map resize handling:
+    // - Scroll shrink changes #map-container height with a CSS transition
+    // - Switching days may call fitBounds while container is small, causing huge zoom-out
+    // - Fix: always re-fit to the latest route bounds whenever the container size changes
     // ─────────────────────────────────────────────────
-    let _lastRouteBounds = null; // 儲存最後一次 fitBounds 用的 bounds
-    
-    // Patch updateMapWithRouting：畫完 route 之後把 bounds 存起來
-    const _origUpdateMap = updateMapWithRouting;
-    // 我們直接 override window 層
     window._fitLastBounds = function () {
-        if (!map || !_lastRouteBounds) return;
+        if (!map || !lastRouteBounds) return;
+        if (typeof lastRouteBounds.isValid === 'function' && !lastRouteBounds.isValid()) return;
         try {
             map.invalidateSize();
-            map.fitBounds(_lastRouteBounds, { padding: [40, 40], animate: true });
+            map.fitBounds(lastRouteBounds, { padding: [40, 40], animate: true });
         } catch (e) {}
     };
-    
-    // ─────────────────────────────────────────────────
-    // 2. ResizeObserver：map container 大小改變時自動 re-fit
-    // ─────────────────────────────────────────────────
+
     (function setupMapResize() {
         const container = document.getElementById('map-container');
         if (!container || typeof ResizeObserver === 'undefined') return;
-    
+
         let resizeTimer = null;
         const ro = new ResizeObserver(() => {
-            // debounce 150ms，避免動畫過程中頻繁觸發
+            // Debounce to avoid repeated fits during transition animation
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
-                if (!map) return;
-                map.invalidateSize();
-                if (_lastRouteBounds) {
-                    map.fitBounds(_lastRouteBounds, { padding: [40, 40], animate: true });
-                }
-            }, 150);
+                window._fitLastBounds && window._fitLastBounds();
+                // Extra delayed pass helps when CSS transition hasn't finished yet
+                setTimeout(() => window._fitLastBounds && window._fitLastBounds(), 350);
+            }, 200);
         });
-    
+
         ro.observe(container);
     })();
     
@@ -1313,7 +1306,10 @@ async function updateMapWithRouting(routeKeys, color) {
     });
 
     if (waypoints.length < 2) {
-         if (waypoints.length === 1) map.setView(waypoints[0], 10);
+         if (waypoints.length === 1) {
+            map.setView(waypoints[0], 10);
+            lastRouteBounds = L.latLngBounds([waypoints[0], waypoints[0]]);
+         }
          return;
     }
 
@@ -1328,12 +1324,17 @@ async function updateMapWithRouting(routeKeys, color) {
             const routeGeoJSON = json.routes[0].geometry;
             L.geoJSON(routeGeoJSON, { style: { color: color, weight: 5, opacity: 0.8 } }).addTo(currentLayerGroup);
             const bounds = L.geoJSON(routeGeoJSON).getBounds();
+            lastRouteBounds = bounds;
             map.fitBounds(bounds, { padding: [50, 50] });
         } else {
             L.polyline(waypoints, { color: color, weight: 2, dashArray: '5,5' }).addTo(currentLayerGroup);
+            lastRouteBounds = L.latLngBounds(waypoints.map(p => L.latLng(p[0], p[1])));
+            map.fitBounds(lastRouteBounds, { padding: [50, 50] });
         }
     } catch (e) {
         L.polyline(waypoints, { color: color, weight: 2, dashArray: '5,5' }).addTo(currentLayerGroup);
+        lastRouteBounds = L.latLngBounds(waypoints.map(p => L.latLng(p[0], p[1])));
+        map.fitBounds(lastRouteBounds, { padding: [50, 50] });
     }
 }
 
