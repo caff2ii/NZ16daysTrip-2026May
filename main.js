@@ -278,6 +278,27 @@ async function init() {
         const statusText = document.getElementById('auth-status');
         if (statusText) statusText.innerText = "連線失敗: 權限不足";
     }
+    // Sticky Map Shrink：捲動超過 80px 時地圖縮小
+    (function setupMapShrink() {
+        const SCROLL_THRESHOLD = 80;
+        let ticking = false;
+    
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                requestAnimationFrame(() => {
+                    if (window.scrollY > SCROLL_THRESHOLD) {
+                        document.body.classList.add('map-shrunk');
+                    } else {
+                        document.body.classList.remove('map-shrunk');
+                    }
+                    // 告知 Leaflet 重新計算尺寸
+                    if (map) map.invalidateSize();
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        }, { passive: true });
+    })();
 }
 
 // --- 4. 核心功能: Firebase 存取 ---
