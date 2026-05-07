@@ -470,7 +470,11 @@ function renderViewMode() {
     `;
     
     data.schedule.forEach((item, idx) => {
-        const typeClass = item.type === 'drive' ? 'drive' : (item.type === 'hotel' ? 'hotel' : '');
+        // Remove "drive" type; treat legacy drive entries as "activity"
+        const normalizedType = item.type === 'drive' ? 'activity' : item.type;
+        const typeClass =
+            normalizedType === 'activity' ? 'activity' :
+            (normalizedType === 'hotel' ? 'hotel' : '');
         const mapQuery = encodeURIComponent(item.text + " New Zealand");
         const mapUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
 
@@ -497,10 +501,10 @@ function renderViewMode() {
                         ${stayHtml}
                     </div>
                     <div style="font-size: 18px;">
-                        ${item.type === 'drive' ? '🚗' : ''}
-                        ${item.type === 'hotel' ? '🛏️' : ''}
-                        ${item.type === 'visit' ? '🏔️' : ''}
-                        ${item.type === 'food' ? '🍴' : ''}
+                        ${normalizedType === 'activity' ? '🧗' : ''}
+                        ${normalizedType === 'hotel' ? '🛏️' : ''}
+                        ${normalizedType === 'visit' ? '🏔️' : ''}
+                        ${normalizedType === 'food' ? '🍴' : ''}
                     </div>
                 </div>
                 <div class="item-title" style="font-weight: bold; margin-top: 5px; font-size: 1.1em;">${item.text}</div>
@@ -929,6 +933,8 @@ function startEditMode() {
     };
 
     let editSchedule = JSON.parse(JSON.stringify(data.schedule || []));
+    // Remove legacy "drive" type by converting to "activity"
+    editSchedule = editSchedule.map((it) => (it && it.type === 'drive' ? { ...it, type: 'activity' } : it));
 
     // --- 1. 數據自動同步與更新 (Grab Logic) ---
     
@@ -1067,7 +1073,7 @@ function generateEditRow(item, idx) {
                        style="width: 60px; flex-shrink: 0; height: 32px; text-align: center; border: 1px solid #dcdfe6; border-radius: 6px; font-size: 13px; font-family: monospace; font-weight: bold;">
                 <select name="type" style="width: 70px; flex-shrink: 0; height: 32px;">
                     <option value="visit" ${item.type==='visit'?'selected':''}>景點</option>
-                    <option value="drive" ${item.type==='drive'?'selected':''}>開車</option>
+                    <option value="activity" ${item.type==='activity'?'selected':''}>活動</option>
                     <option value="hotel" ${item.type==='hotel'?'selected':''}>住宿</option>
                     <option value="food" ${item.type==='food'?'selected':''}>餐廳</option>
                 </select>

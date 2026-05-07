@@ -197,10 +197,12 @@ body {
 }
 .timeline-item.drive::before  { background: #f39c12; box-shadow: 0 0 0 2px #f39c12; }
 .timeline-item.hotel::before  { background: #9b59b6; box-shadow: 0 0 0 2px #9b59b6; }
+.timeline-item.activity::before { background: #e74c3c; box-shadow: 0 0 0 2px #e74c3c; }
 
 /* Light tint per type */
 .timeline-item.drive { background: #fffdf5; }
 .timeline-item.hotel { background: #f9f5ff; }
+.timeline-item.activity { background: #fff5f5; }
 
 /* Badges */
 .time-badge {
