@@ -215,8 +215,19 @@ body {
   background: var(--bg-primary);
 }
 
-.hamburger-dropdown-item:first-child {
+.hamburger-dropdown-item {
   border-bottom: 1px solid var(--border-color);
+}
+
+.hamburger-dropdown-item.danger {
+  color: #e74c3c;
+}
+
+.hamburger-dropdown-status {
+  padding: 8px 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-color);
 }
 
 .title-section {

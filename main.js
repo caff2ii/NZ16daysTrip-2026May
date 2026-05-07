@@ -1,5 +1,107 @@
 import { db, ref, set, onValue, get, auth, provider, signInWithRedirect, getRedirectResult, signInWithPopup, onAuthStateChanged, signOut } from './firebase-config.js';
 
+const APP_CACHE_NAME = 'nz-trip-app-v121';
+const OFFLINE_SNAPSHOT_KEY = 'nz-trip-offline-snapshot';
+const OFFLINE_MODE_KEY = 'nz-trip-offline-mode';
+const APP_SHELL_FILES = [
+    './',
+    './index.html',
+    './style.css',
+    './main.js',
+    './firebase-config.js',
+    './sw.js'
+];
+
+function buildHamburgerMenuHtml({ isAdmin, displayName }) {
+    const authButton = isAdmin
+        ? `<button class="hamburger-dropdown-item" onclick="window.logoutAdmin()">登出管理員</button>`
+        : `<button class="hamburger-dropdown-item" onclick="openLoginModal()">管理員登入</button>`;
+    const modeText = isAdmin
+        ? `管理員模式：${displayName || '已開啟'}`
+        : '訪客模式 (唯讀)';
+
+    return `
+        ${authButton}
+        <button class="hamburger-dropdown-item" onclick="window.enableOfflineMode()">離線模式</button>
+        <button class="hamburger-dropdown-item danger" onclick="window.clearAppCache()">清除快取</button>
+        <div class="hamburger-dropdown-status">
+            ${modeText}
+        </div>
+    `;
+}
+
+function saveOfflineSnapshot() {
+    try {
+        localStorage.setItem(OFFLINE_SNAPSHOT_KEY, JSON.stringify({
+            itineraryData,
+            coords,
+            coordNames,
+            savedAt: new Date().toISOString()
+        }));
+    } catch (e) {
+        console.warn('Offline snapshot save failed:', e);
+    }
+}
+
+function loadOfflineSnapshot() {
+    try {
+        const raw = localStorage.getItem(OFFLINE_SNAPSHOT_KEY);
+        if (!raw) return false;
+        const snapshot = JSON.parse(raw);
+        itineraryData = snapshot.itineraryData || [];
+        coords = snapshot.coords || defaultCoords;
+        coordNames = snapshot.coordNames || defaultCoordNames;
+        return itineraryData.length > 0;
+    } catch (e) {
+        console.warn('Offline snapshot load failed:', e);
+        return false;
+    }
+}
+
+window.logoutAdmin = function() {
+    signOut(auth).then(() => location.reload());
+};
+
+window.enableOfflineMode = async function() {
+    if (!('serviceWorker' in navigator) || !('caches' in window)) {
+        alert('此瀏覽器暫不支援離線模式。');
+        return;
+    }
+
+    try {
+        await navigator.serviceWorker.register('./sw.js');
+        const cache = await caches.open(APP_CACHE_NAME);
+        await cache.addAll(APP_SHELL_FILES);
+        saveOfflineSnapshot();
+        localStorage.setItem(OFFLINE_MODE_KEY, '1');
+        alert('離線模式已準備好。之後無網絡時可開啟已快取的行程。');
+    } catch (e) {
+        console.error('Enable offline mode failed:', e);
+        alert('離線模式設定失敗，請稍後再試。');
+    }
+};
+
+window.clearAppCache = async function() {
+    if (!confirm('確定要清除離線快取嗎？下次離線可能無法開啟行程。')) return;
+
+    try {
+        if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(key => caches.delete(key)));
+        }
+        if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map(reg => reg.unregister()));
+        }
+        localStorage.removeItem(OFFLINE_SNAPSHOT_KEY);
+        localStorage.removeItem(OFFLINE_MODE_KEY);
+        alert('快取已清除。');
+    } catch (e) {
+        console.error('Clear cache failed:', e);
+        alert('清除快取失敗，請稍後再試。');
+    }
+};
+
 // ========== DARK MODE 管理 ==========
 window.initializeDarkMode = function() {
     const savedTheme = localStorage.getItem('theme') || 'light';
@@ -61,6 +163,11 @@ window.updateMapTheme = function(theme) {
 // 頁面載入時初始化 Dark Mode
 document.addEventListener('DOMContentLoaded', function() {
     window.initializeDarkMode();
+    if (localStorage.getItem(OFFLINE_MODE_KEY) === '1' && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(e => {
+            console.warn('Service worker registration failed:', e);
+        });
+    }
     
     // 添加按鈕事件監聽器
     const toggleBtn = document.getElementById('dark-mode-toggle');
@@ -133,12 +240,10 @@ onAuthStateChanged(auth, (user) => {
         
         // 更新 hamburger menu
         if (hamburgerDropdown) {
-            hamburgerDropdown.innerHTML = `
-                <button class="hamburger-dropdown-item" onclick="signOut(auth).then(() => location.reload())">登出管理員</button>
-                <div style="padding: 8px 16px; font-size: 12px; color: var(--text-secondary); border-top: 1px solid var(--border-color);">
-                    管理員模式：${user.displayName || '已開啟'}
-                </div>
-            `;
+            hamburgerDropdown.innerHTML = buildHamburgerMenuHtml({
+                isAdmin: true,
+                displayName: user.displayName
+            });
         }
         
         // --- 新增：插入匯出匯入按鈕到頂部 Admin Bar ---
@@ -185,12 +290,9 @@ onAuthStateChanged(auth, (user) => {
         
         // 更新 hamburger menu
         if (hamburgerDropdown) {
-            hamburgerDropdown.innerHTML = `
-                <button class="hamburger-dropdown-item" onclick="openLoginModal()">管理員登入</button>
-                <div style="padding: 8px 16px; font-size: 12px; color: var(--text-secondary); border-top: 1px solid var(--border-color);">
-                    訪客模式 (唯讀)
-                </div>
-            `;
+            hamburgerDropdown.innerHTML = buildHamburgerMenuHtml({
+                isAdmin: false
+            });
         }
     }
 
@@ -384,6 +486,7 @@ async function init() {
             coordNames = JSON.parse(JSON.stringify(defaultCoordNames));
             saveToFirebase();
         }
+        saveOfflineSnapshot();
 
         // --- 修改這裡：不要覆蓋 innerText ---
         console.log("📡 Firebase 連線狀態: 已連線"); 
@@ -397,15 +500,26 @@ async function init() {
             if (!isEditingMode && snapshot.exists()) {
                 console.log("🔄 偵測到雲端更新");
                 itineraryData = snapshot.val();
+                saveOfflineSnapshot();
                 loadDay(currentDayIndex);
             }
         });
 
     } catch (error) {
         console.error("Firebase 讀取錯誤:", error);
-        // 只有出錯時才顯示文字提醒
+        if (loadOfflineSnapshot()) {
+            console.log("📴 使用離線快取資料");
+            renderNav();
+            loadDay(currentDayIndex);
+        } else {
+            itineraryData = JSON.parse(JSON.stringify(defaultItinerary));
+            coords = JSON.parse(JSON.stringify(defaultCoords));
+            coordNames = JSON.parse(JSON.stringify(defaultCoordNames));
+            renderNav();
+            loadDay(currentDayIndex);
+        }
         const statusText = document.getElementById('auth-status');
-        if (statusText) statusText.innerText = "連線失敗: 權限不足";
+        if (statusText) statusText.innerText = navigator.onLine ? "連線失敗：使用離線資料" : "離線模式：使用快取資料";
     }
     // ─────────────────────────────────────────────────
     // Map resize handling:
@@ -528,6 +642,7 @@ async function init() {
 
 // --- 4. 核心功能: Firebase 存取 ---
 function saveToFirebase() {
+    saveOfflineSnapshot();
     // 分開儲存到指定路徑，這樣不會觸發根目錄的寫入權限錯誤
     set(ref(db, 'itinerary'), itineraryData);
     set(ref(db, 'coords'), coords);
