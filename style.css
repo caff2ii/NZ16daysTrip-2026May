@@ -446,8 +446,23 @@ body.map-fullscreen.map-shrunk #map-container {
 }
 
 .weather-small-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
   margin-bottom: 8px;
+}
+
+.weather-small-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(26,188,156,0.12);
+  font-size: 20px;
 }
 
 .weather-small-copy {
@@ -505,6 +520,16 @@ body.map-fullscreen.map-shrunk #map-container {
   border-radius: 8px;
   background: var(--bg-primary);
   color: var(--text-secondary);
+}
+
+.weather-small-sun {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 7px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 /* ---------- Itinerary Content ---------- */
@@ -1042,6 +1067,11 @@ input[type="number"]::-webkit-outer-spin-button { opacity: 1; height: 24px; }
     flex: 1;
     min-width: 0;
     margin-bottom: 0;
+  }
+
+  body.map-shrunk #weather-display .weather-small-icon,
+  body.map-shrunk #weather-display .weather-small-sun {
+    display: none;
   }
 
   body.map-shrunk #weather-display .weather-small-title {

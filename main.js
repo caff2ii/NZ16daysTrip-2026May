@@ -1428,6 +1428,7 @@ async function updateWeatherInfo(data) {
             return `
                 <div class="weather-compact-card" style="--weather-accent:${style.border};">
                     <div class="weather-small-main">
+                        <div class="weather-small-icon">?</div>
                         <div class="weather-small-copy">
                             <div class="weather-small-title">${name || '未知'}</div>
                             <div class="weather-small-desc">? 暫無資料</div>
@@ -1441,15 +1442,20 @@ async function updateWeatherInfo(data) {
         return `
             <div class="weather-compact-card" style="--weather-accent:${style.border};">
                 <div class="weather-small-main">
+                    <div class="weather-small-icon">${weather.icon}</div>
                     <div class="weather-small-copy">
                         <div class="weather-small-title" title="${name}">${name}</div>
-                        <div class="weather-small-desc">${weather.icon} ${weather.weather}</div>
+                        <div class="weather-small-desc">${weather.weather}</div>
                     </div>
                 </div>
                 <div class="weather-small-temps">
                     <div class="weather-temp-chip ${tempSlot === 'am' ? 'is-current' : ''}"><span>早</span><strong>${weather.tempAM}</strong></div>
                     <div class="weather-temp-chip ${tempSlot === 'pm' ? 'is-current' : ''}"><span>午</span><strong>${weather.tempPM}</strong></div>
                     <div class="weather-temp-chip ${tempSlot === 'night' ? 'is-current' : ''}"><span>晚</span><strong>${weather.tempNight}</strong></div>
+                </div>
+                <div class="weather-small-sun">
+                    <span>🌅 ${weather.sunrise}</span>
+                    <span>🌇 ${weather.sunset}</span>
                 </div>
             </div>
         `;
