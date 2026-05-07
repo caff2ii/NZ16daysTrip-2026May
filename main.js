@@ -1420,14 +1420,17 @@ async function updateWeatherInfo(data) {
 
     const buildCompactCard = (name, weather) => {
         const style = getWeatherStyle(weather?.type);
+        const currentHour = new Date().getHours();
+        const tempSlot = currentHour < 12
+            ? { label: '早', value: weather?.tempAM }
+            : (currentHour < 18 ? { label: '午', value: weather?.tempPM } : { label: '晚', value: weather?.tempNight });
         if (!weather || weather.isOutOfRange) {
             return `
                 <div class="weather-compact-card" style="--weather-accent:${style.border};">
                     <div class="weather-small-main">
-                        <div class="weather-small-icon">?</div>
                         <div class="weather-small-copy">
                             <div class="weather-small-title">${name || '未知'}</div>
-                            <div class="weather-small-desc">暫無資料</div>
+                            <div class="weather-small-desc">? 暫無資料</div>
                         </div>
                     </div>
                     <div class="weather-small-temps weather-small-empty">--</div>
@@ -1438,20 +1441,13 @@ async function updateWeatherInfo(data) {
         return `
             <div class="weather-compact-card" style="--weather-accent:${style.border};">
                 <div class="weather-small-main">
-                    <div class="weather-small-icon">${weather.icon}</div>
                     <div class="weather-small-copy">
                         <div class="weather-small-title" title="${name}">${name}</div>
-                        <div class="weather-small-desc">${weather.weather}</div>
+                        <div class="weather-small-desc">${weather.icon} ${weather.weather}</div>
                     </div>
                 </div>
-                <div class="weather-small-temps">
-                    <div><span>早</span><strong>${weather.tempAM}</strong></div>
-                    <div><span>午</span><strong>${weather.tempPM}</strong></div>
-                    <div><span>晚</span><strong>${weather.tempNight}</strong></div>
-                </div>
-                <div class="weather-small-sun">
-                    <span>🌅 ${weather.sunrise}</span>
-                    <span>🌇 ${weather.sunset}</span>
+                <div class="weather-small-temps weather-single-temp">
+                    <div><span>${tempSlot.label}</span><strong>${tempSlot.value || '--'}</strong></div>
                 </div>
             </div>
         `;

@@ -438,31 +438,16 @@ body.map-fullscreen.map-shrunk #map-container {
   min-width: 0;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-top: 3px solid var(--weather-accent, #1abc9c);
-  border-radius: 12px;
-  padding: 10px;
-  box-shadow: 0 8px 22px rgba(0,0,0,0.08);
+  border-top: 2px solid var(--weather-accent, #1abc9c);
+  border-radius: 10px;
+  padding: 7px 8px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
   overflow: hidden;
 }
 
 .weather-small-main {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   min-width: 0;
-  margin-bottom: 8px;
-}
-
-.weather-small-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  background: rgba(26,188,156,0.12);
-  font-size: 20px;
+  margin-bottom: 5px;
 }
 
 .weather-small-copy {
@@ -471,17 +456,18 @@ body.map-fullscreen.map-shrunk #map-container {
 }
 
 .weather-small-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
-  line-height: 1.2;
+  line-height: 1.15;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .weather-small-desc {
-  margin-top: 2px;
-  font-size: 11px;
+  margin-top: 1px;
+  font-size: 10px;
+  line-height: 1.1;
   color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -490,28 +476,44 @@ body.map-fullscreen.map-shrunk #map-container {
 
 .weather-small-temps {
   display: flex;
-  gap: 5px;
-  font-size: 11px;
+  gap: 4px;
+  font-size: 10px;
   color: var(--text-primary);
 }
 
 .weather-small-temps div {
   flex: 1;
   text-align: center;
-  border-radius: 8px;
-  padding: 5px 2px;
+  border-radius: 7px;
+  padding: 3px 2px;
   background: var(--bg-primary);
 }
 
 .weather-small-temps span {
   display: block;
-  margin-bottom: 3px;
+  margin-bottom: 1px;
   opacity: 0.75;
 }
 
 .weather-small-temps strong {
-  font-size: 14px;
+  font-size: 12px;
   display: block;
+}
+
+.weather-single-temp div {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 5px;
+  padding: 4px 6px;
+}
+
+.weather-single-temp span {
+  margin-bottom: 0;
+}
+
+.weather-single-temp strong {
+  font-size: 14px;
 }
 
 .weather-small-empty {
@@ -520,16 +522,6 @@ body.map-fullscreen.map-shrunk #map-container {
   border-radius: 8px;
   background: var(--bg-primary);
   color: var(--text-secondary);
-}
-
-.weather-small-sun {
-  display: flex;
-  justify-content: space-between;
-  gap: 6px;
-  margin-top: 7px;
-  font-size: 10px;
-  color: var(--text-secondary);
-  white-space: nowrap;
 }
 
 /* ---------- Itinerary Content ---------- */
@@ -1043,7 +1035,7 @@ input[type="number"]::-webkit-outer-spin-button { opacity: 1; height: 24px; }
   #weather-display .weather-compact {
     display: grid;
     background: var(--bg-primary);
-    padding: 10px 0 8px;
+    padding: 6px 0;
     border-bottom: 1px solid var(--border-color);
   }
 
