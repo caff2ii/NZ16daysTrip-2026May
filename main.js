@@ -952,14 +952,6 @@ function getWeatherStyle(type) {
     }
 }
 
-function getWeatherWarning(type) {
-    if (type === "rain") return "🌧️ 注意降雨，路面濕滑";
-    if (type === "storm") return "⛈️ 雷暴風險，避免戶外活動";
-    if (type === "snow") return "❄️ 可能積雪 / 路面結冰";
-    if (type === "fog") return "🌫️ 能見度低，駕駛小心";
-    return null;
-}
-
 async function updateWeatherInfo(data) {
     const weatherDiv = document.getElementById('weather-display');
     if (!weatherDiv) return;
@@ -986,17 +978,14 @@ async function updateWeatherInfo(data) {
         prevWeather = await fetchWeatherData(prevCoords[0], prevCoords[1], travelDate);
     }
 
-    const buildWeatherCard = (name, weather, isToday) => {
+    const buildWeatherCard = (name, weather) => {
         const style = getWeatherStyle(weather?.type);
-        const warning = getWeatherWarning(weather?.type);
         const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
 
         const textColor = weather?.type === "storm" ? (isDarkMode ? "#e0e0e0" : "#fff") : (isDarkMode ? "#e0e0e0" : "#111");
         const boxBg = weather?.type === "storm"
             ? (isDarkMode ? "rgba(100,100,100,0.2)" : "rgba(255,255,255,0.1)")
             : (isDarkMode ? "rgba(100,100,100,0.2)" : "rgba(255,255,255,0.4)");
-
-        const label = isToday ? "今日抵達" : "昨日出發";
 
         if (!weather || weather.isOutOfRange) {
             return `
@@ -1010,10 +999,7 @@ async function updateWeatherInfo(data) {
                     border:1px solid ${style.border};
                     min-width:0;
                 ">
-                    <div style="font-size:11px;font-weight:bold;opacity:0.7;">
-                        ${label}
-                    </div>
-                    <div style="font-size:14px;font-weight:900;margin:8px 0;">
+                    <div style="font-size:14px;font-weight:900;margin-bottom:8px;">
                         ${name || '未知'}
                     </div>
                     <div style="font-size:12px;font-weight:bold;">
@@ -1035,13 +1021,10 @@ async function updateWeatherInfo(data) {
                 border:1px solid ${style.border};
                 min-width:0;
             ">
-                <div style="font-size:11px;font-weight:bold;opacity:0.8;letter-spacing:1px;">
-                    ${label}
-                </div>
                 <div style="
                     font-size:15px;
                     font-weight:900;
-                    margin:8px 0 10px;
+                    margin:0 0 10px;
                     white-space:nowrap;
                     overflow:hidden;
                     text-overflow:ellipsis;
@@ -1051,16 +1034,6 @@ async function updateWeatherInfo(data) {
                 <div style="font-size:26px;margin-bottom:6px;">
                     ${weather.icon} ${weather.weather}
                 </div>
-                ${warning ? `
-                    <div style="
-                        font-size:11px;
-                        margin-bottom:8px;
-                        font-weight:600;
-                        opacity:0.9;
-                    ">
-                        ${warning}
-                    </div>
-                ` : ""}
                 <div style="
                     background:${boxBg};
                     border-radius:20px;
@@ -1092,26 +1065,40 @@ async function updateWeatherInfo(data) {
         `;
     };
 
-    const buildCompactCard = (name, weather, isToday) => {
-        const label = isToday ? "今日抵達" : "昨日出發";
+    const buildCompactCard = (name, weather) => {
+        const style = getWeatherStyle(weather?.type);
         if (!weather || weather.isOutOfRange) {
             return `
-                <div class="weather-compact-card">
-                    <div class="weather-small-label">${label}</div>
-                    <div class="weather-small-title">${name || '未知'}</div>
-                    <div class="weather-small-temps">--</div>
+                <div class="weather-compact-card" style="--weather-accent:${style.border};">
+                    <div class="weather-small-main">
+                        <div class="weather-small-icon">?</div>
+                        <div class="weather-small-copy">
+                            <div class="weather-small-title">${name || '未知'}</div>
+                            <div class="weather-small-desc">暫無資料</div>
+                        </div>
+                    </div>
+                    <div class="weather-small-temps weather-small-empty">--</div>
                 </div>
             `;
         }
 
         return `
-            <div class="weather-compact-card">
-                <div class="weather-small-label">${label}</div>
-                <div class="weather-small-title" title="${name}">${name}</div>
+            <div class="weather-compact-card" style="--weather-accent:${style.border};">
+                <div class="weather-small-main">
+                    <div class="weather-small-icon">${weather.icon}</div>
+                    <div class="weather-small-copy">
+                        <div class="weather-small-title" title="${name}">${name}</div>
+                        <div class="weather-small-desc">${weather.weather}</div>
+                    </div>
+                </div>
                 <div class="weather-small-temps">
                     <div><span>早</span><strong>${weather.tempAM}</strong></div>
                     <div><span>午</span><strong>${weather.tempPM}</strong></div>
                     <div><span>晚</span><strong>${weather.tempNight}</strong></div>
+                </div>
+                <div class="weather-small-sun">
+                    <span>🌅 ${weather.sunrise}</span>
+                    <span>🌇 ${weather.sunset}</span>
                 </div>
             </div>
         `;
@@ -1127,13 +1114,13 @@ async function updateWeatherInfo(data) {
                 margin:15px 0;
                 padding:5px;
             ">
-                ${buildWeatherCard(data.prevStay, prevWeather, false)}
-                ${buildWeatherCard(data.stay, stayWeather, true)}
+                ${buildWeatherCard(data.prevStay, prevWeather)}
+                ${buildWeatherCard(data.stay, stayWeather)}
             </div>
         </div>
         <div class="weather-compact">
-            ${buildCompactCard(data.prevStay, prevWeather, false)}
-            ${buildCompactCard(data.stay, stayWeather, true)}
+            ${buildCompactCard(data.prevStay, prevWeather)}
+            ${buildCompactCard(data.stay, stayWeather)}
         </div>
     `;
 }
