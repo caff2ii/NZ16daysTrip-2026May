@@ -783,6 +783,7 @@ input[type="number"]::-webkit-outer-spin-button { opacity: 1; height: 24px; }
   #main-container {
     flex-direction: column;
     overflow: hidden;
+    min-height: 0;
   }
 
   #top-bar {
@@ -793,11 +794,11 @@ input[type="number"]::-webkit-outer-spin-button { opacity: 1; height: 24px; }
 
   /* On mobile: map is ON TOP, sidebar scrolls below */
   #map-container {
+    order: 1;
     flex: none;
     width: 100%;
     height: 240px;             /* fixed initial height */
-    position: sticky;
-    top: 0;
+    position: relative;
     z-index: 500;
     transition: height .3s ease;
   }
@@ -836,8 +837,10 @@ input[type="number"]::-webkit-outer-spin-button { opacity: 1; height: 24px; }
   }
 
   #sidebar {
+    order: 2;
     width: 100%;
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     border-right: none;
