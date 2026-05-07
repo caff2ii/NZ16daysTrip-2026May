@@ -305,6 +305,46 @@ body {
   height: 100%;
 }
 
+#map-container {
+  position: relative;
+}
+
+.map-controls {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  gap: 8px;
+  z-index: 1005;
+}
+
+.map-control-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.45);
+  color: white;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.map-control-btn:hover {
+  background: rgba(0, 0, 0, 0.65);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .map-controls {
+    display: flex;
+  }
+}
+
 /* Shrink on scroll is handled in the mobile media query below.
    (Do NOT apply on desktop flex-row layout, or the map can collapse/disappear.) */
 

@@ -43,10 +43,15 @@
             <button id="reset-data-btn" onclick="resetDataToDefault()">初始化數據 (僅管理員)</button>
         </div>
         <div id="map-container">
+          <div id="map-controls" class="map-controls">
+            <button id="map-toggle-btn" class="map-control-btn" title="收起/展開地圖">▲</button>
+            <button id="map-fit-btn" class="map-control-btn" title="回復到原本位置">⤢</button>
+            <button id="map-zoommax-btn" class="map-control-btn" title="放到最大">＋</button>
+          </div>
           <div id="map"></div>
         </div>
     </div>
-
+    
     <div id="loc-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -70,8 +75,7 @@
             <div style="margin-bottom:10px;">
                 <input type="text" id="loc-search" placeholder="🔍 搜尋地點..." class="input-full" onkeyup="window.renderLocList()">
             </div>
-            <div id="loc-list-container" class="loc-list">
-                </div>
+            <div id="loc-list-container" class="loc-list"></div>
         </div>
     </div>
     

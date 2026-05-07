@@ -88,18 +88,30 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-});
 
-// --- 完整管理員權限控制邏輯 ---
+        const mapToggleBtn = document.getElementById('map-toggle-btn');
+        const mapFitBtn = document.getElementById('map-fit-btn');
+        const mapZoomMaxBtn = document.getElementById('map-zoommax-btn');
 
-// 處理 Redirect 跳轉回來的結果 (這能解決跳回後變訪客的問題)
-getRedirectResult(auth).then((result) => {
-    if (result && result.user) {
-        console.log("Redirect 成功，用戶已登入:", result.user.displayName);
-    }
-}).catch((error) => {
-    console.error("Redirect 出錯:", error.message);
-});
+        if (mapToggleBtn) {
+            mapToggleBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.toggleMapShrink();
+            });
+        }
+        if (mapFitBtn) {
+            mapFitBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.restoreMapPosition();
+            });
+        }
+        if (mapZoomMaxBtn) {
+            mapZoomMaxBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.zoomMapMax();
+            });
+        }
+    });
 
 onAuthStateChanged(auth, (user) => {
     // 1. 設定你的專屬 UID
@@ -431,6 +443,33 @@ async function init() {
 
         ro.observe(container);
     })();
+
+    function updateMapToggleIcon() {
+        const toggleBtn = document.getElementById('map-toggle-btn');
+        if (!toggleBtn) return;
+        toggleBtn.textContent = document.body.classList.contains('map-shrunk') ? '▼' : '▲';
+    }
+
+    window.toggleMapShrink = function () {
+        const isShrunk = document.body.classList.toggle('map-shrunk');
+        updateMapToggleIcon();
+        if (!isShrunk) {
+            window._fitLastBounds && window._fitLastBounds();
+        }
+    };
+
+    window.restoreMapPosition = function () {
+        document.body.classList.remove('map-shrunk');
+        updateMapToggleIcon();
+        window._fitLastBounds && window._fitLastBounds();
+    };
+
+    window.zoomMapMax = function () {
+        if (!map) return;
+        const maxZoom = map.getMaxZoom();
+        map.setZoom(maxZoom);
+        map.panTo(map.getCenter(), { animate: true });
+    };
     
     // ─────────────────────────────────────────────────
     // 3. Sticky Map Shrink（捲動時地圖縮小）
@@ -446,6 +485,7 @@ async function init() {
                     const shouldShrink = scrollTop > THRESHOLD;
                     if (wasShrunk !== shouldShrink) {
                         document.body.classList.toggle('map-shrunk', shouldShrink);
+                        updateMapToggleIcon();
                         // layout 改了才 invalidate，ResizeObserver 會接手 fitBounds
                     }
                     ticking = false;
