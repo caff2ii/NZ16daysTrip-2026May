@@ -528,6 +528,22 @@ body.map-fullscreen.map-shrunk #map-container {
 }
 .timeline-item:active { transform: scale(.99); }
 
+.timeline-item.has-map-point {
+  cursor: pointer;
+}
+
+.timeline-item.has-map-point:hover,
+.timeline-item.has-map-point:focus-visible {
+  border-left-color: #1abc9c;
+  outline: none;
+  box-shadow: 0 8px 22px rgba(26,188,156,0.18), var(--shadow-sm);
+}
+
+.timeline-item.is-map-focused {
+  border-left-color: #1abc9c;
+  box-shadow: 0 10px 26px rgba(26,188,156,0.22), var(--shadow-sm);
+}
+
 .timeline-item::before {
   content: '';
   position: absolute;

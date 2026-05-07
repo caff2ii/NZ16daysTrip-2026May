@@ -339,6 +339,7 @@ const defaultItinerary = [
 
 // --- 2. 系統變數 ---
 let map, currentLayerGroup;
+let routeMarkersByKey = {};
 let itineraryData = [];
 let coords = {};
 let coordNames = {};
@@ -656,8 +657,11 @@ function renderViewMode() {
             displayDrive = window.formatDriveTime ? window.formatDriveTime(item.drive) : item.drive;
         }
         
+        const hasMapPoint = item.mapKey && coords[item.mapKey];
+        const mapKeyAttrs = hasMapPoint ? ` data-map-key="${item.mapKey}" role="button" tabindex="0" title="在地圖查看此地點"` : '';
+        const mapFocusClass = hasMapPoint ? ' has-map-point' : '';
         html += `
-            <div class="timeline-item ${typeClass}">
+            <div class="timeline-item ${typeClass}${mapFocusClass}"${mapKeyAttrs}>
                 <div class="item-header" style="display: flex; align-items: center; justify-content: space-between;">
                     <div style="display: flex; align-items: center;">
                         <span class="time-badge">${item.time}</span>
@@ -704,7 +708,46 @@ function renderViewMode() {
     });
     
     contentDiv.innerHTML = html;
+    bindTimelineMapFocus(contentDiv);
 }
+
+function bindTimelineMapFocus(contentDiv) {
+    contentDiv.querySelectorAll('.timeline-item[data-map-key]').forEach(card => {
+        card.addEventListener('click', (event) => {
+            if (event.target.closest('a, button, input, select, textarea')) return;
+            window.focusMapPoint(card.dataset.mapKey, card);
+        });
+
+        card.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            window.focusMapPoint(card.dataset.mapKey, card);
+        });
+    });
+}
+
+window.focusMapPoint = function(mapKey, sourceCard) {
+    const point = coords?.[mapKey];
+    if (!map || !point) return;
+
+    document.querySelectorAll('.timeline-item.is-map-focused').forEach(card => {
+        card.classList.remove('is-map-focused');
+    });
+    if (sourceCard) sourceCard.classList.add('is-map-focused');
+
+    requestAnimationFrame(() => {
+        map.invalidateSize();
+        map.flyTo(point, Math.max(map.getZoom(), 13), {
+            animate: true,
+            duration: 0.7
+        });
+
+        const marker = routeMarkersByKey[mapKey]?.[0];
+        if (marker) {
+            setTimeout(() => marker.openPopup(), 450);
+        }
+    });
+};
 
 // 計算兩點之間的車程（回傳分鐘與公里）
 async function getDriveInfo(startCoords, endCoords) {
@@ -1526,6 +1569,7 @@ function updateRowNumbers() {
 // --- 8. 地圖路由 (OSRM) ---
 async function updateMapWithRouting(routeKeys, color) {
     currentLayerGroup.clearLayers();
+    routeMarkersByKey = {};
     if (!routeKeys || routeKeys.length === 0) return;
 
     const waypoints = [];
@@ -1533,7 +1577,9 @@ async function updateMapWithRouting(routeKeys, color) {
         if (coords[key]) {
             const point = coords[key];
             waypoints.push(point);
-            L.marker(point).bindPopup(`<b>${idx + 1}. ${coordNames[key] || key}</b>`).addTo(currentLayerGroup);
+            const marker = L.marker(point).bindPopup(`<b>${idx + 1}. ${coordNames[key] || key}</b>`).addTo(currentLayerGroup);
+            if (!routeMarkersByKey[key]) routeMarkersByKey[key] = [];
+            routeMarkersByKey[key].push(marker);
         }
     });
 
