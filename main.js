@@ -341,6 +341,7 @@ const defaultItinerary = [
 let map, currentLayerGroup;
 let routeMarkersByKey = {};
 let suppressRouteFitUntil = 0;
+let keepMapFocusUntil = 0;
 let itineraryData = [];
 let coords = {};
 let coordNames = {};
@@ -487,6 +488,14 @@ async function init() {
         function onScroll(scrollTop) {
             if (!ticking) {
                 requestAnimationFrame(() => {
+                    if (
+                        document.body.classList.contains('map-card-focus') &&
+                        scrollTop > THRESHOLD &&
+                        Date.now() > keepMapFocusUntil
+                    ) {
+                        document.body.classList.remove('map-card-focus');
+                        map?.invalidateSize();
+                    }
                     const wasShrunk = document.body.classList.contains('map-shrunk');
                     const shouldShrink = scrollTop > THRESHOLD;
                     if (wasShrunk !== shouldShrink) {
@@ -771,6 +780,7 @@ window.focusMapPoint = function(mapKey, sourceCard) {
 
     if (useFloatingMap) {
         document.body.classList.add('map-card-focus');
+        keepMapFocusUntil = Date.now() + 500;
     } else if (wasShrunk) {
         document.body.classList.remove('map-shrunk');
         const toggleBtn = document.getElementById('map-toggle-btn');
