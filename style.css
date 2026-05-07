@@ -145,8 +145,8 @@ body {
   height: 100%;
 }
 
-/* Shrink on scroll (mobile JS adds .map-shrunk to body) */
-body.map-shrunk #map-container { height: 120px; flex: none; }
+/* Shrink on scroll is handled in the mobile media query below.
+   (Do NOT apply on desktop flex-row layout, or the map can collapse/disappear.) */
 
 /* ---------- Weather ---------- */
 #weather-display { padding: 0 12px; }
