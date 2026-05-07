@@ -1,5 +1,40 @@
 import { db, ref, set, onValue, get, auth, provider, signInWithRedirect, getRedirectResult, signInWithPopup, onAuthStateChanged, signOut } from './firebase-config.js';
 
+// ========== DARK MODE 管理 ==========
+function initializeDarkMode() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    applyTheme(savedTheme);
+}
+
+function applyTheme(theme) {
+    const html = document.documentElement;
+    if (theme === 'dark') {
+        html.setAttribute('data-theme', 'dark');
+        updateToggleIcon('☀️');
+    } else {
+        html.removeAttribute('data-theme');
+        updateToggleIcon('🌙');
+    }
+    localStorage.setItem('theme', theme);
+}
+
+function toggleDarkMode() {
+    const html = document.documentElement;
+    const currentTheme = html.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    applyTheme(newTheme);
+}
+
+function updateToggleIcon(icon) {
+    const toggleBtn = document.getElementById('dark-mode-toggle');
+    if (toggleBtn) {
+        toggleBtn.textContent = icon;
+    }
+}
+
+// 頁面載入時初始化 Dark Mode
+document.addEventListener('DOMContentLoaded', initializeDarkMode);
+
 // --- 完整管理員權限控制邏輯 ---
 
 // 處理 Redirect 跳轉回來的結果 (這能解決跳回後變訪客的問題)
