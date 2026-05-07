@@ -402,6 +402,17 @@ function loadDay(index) {
 
     // 2. 渲染畫面
     renderViewMode();
+
+    // 2.5 轉 Day 後自動跳返最上面（sidebar 為主要 scroll container）
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) {
+        sidebar.scrollTo({ top: 0, behavior: 'auto' });
+        // 保險：等 DOM repaint 後再設一次，避免部分手機瀏覽器 miss
+        requestAnimationFrame(() => sidebar.scrollTo({ top: 0, behavior: 'auto' }));
+    } else {
+        window.scrollTo({ top: 0, behavior: 'auto' });
+        requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'auto' }));
+    }
     
     // 3. 獲取當天資料
     const data = itineraryData[index];
