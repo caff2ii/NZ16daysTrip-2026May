@@ -572,10 +572,10 @@ function renderViewMode() {
     const readOnlyText = isDarkMode ? '#aaa' : '#95a5a6';
     const readOnlyBorder = isDarkMode ? '#444' : '#ddd';
     
-    // 檢查是否登入，決定顯示編輯按鈕還是提示文字
+    // 檢查是否登入，決定顯示編輯按鈕還是完全隱藏
     const editBtnHtml = isAdmin ?
         `<button class="btn-main" onclick="window.startEditMode()" style="margin-top:10px; width:100%;">✏️ 編輯整日行程</button>` : 
-        `<div style="text-align:center; color:${readOnlyText}; font-size:12px; padding:10px; background:${readOnlyBg}; border-radius:5px; margin-top:10px; border: 1px solid ${readOnlyBorder};">(唯讀模式，登入後可編輯)</div>`;
+        ``;
     
     const stayLinkBtn = data.stayLink ? 
         `<a href="${data.stayLink}" target="_blank" style="text-decoration:none; font-size:12px; background:#e67e22; color:white; padding:4px 10px; border-radius:6px; margin-left:10px; font-weight:bold;">🔗 查看預訂</a>` : '';
