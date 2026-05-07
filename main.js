@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (mapZoomMaxBtn) {
             mapZoomMaxBtn.addEventListener('click', function(e) {
                 e.preventDefault();
-                window.zoomMapMax();
+                window.toggleMapFullscreen();
             });
         }
     });
@@ -460,15 +460,18 @@ async function init() {
 
     window.restoreMapPosition = function () {
         document.body.classList.remove('map-shrunk');
+        document.body.classList.remove('map-fullscreen');
         updateMapToggleIcon();
         window._fitLastBounds && window._fitLastBounds();
     };
 
-    window.zoomMapMax = function () {
-        if (!map) return;
-        const maxZoom = map.getMaxZoom();
-        map.setZoom(maxZoom);
-        map.panTo(map.getCenter(), { animate: true });
+    window.toggleMapFullscreen = function () {
+        const isFullscreen = document.body.classList.toggle('map-fullscreen');
+        if (isFullscreen) {
+            document.body.classList.remove('map-shrunk');
+        }
+        updateMapToggleIcon();
+        window._fitLastBounds && window._fitLastBounds();
     };
     
     // ─────────────────────────────────────────────────
@@ -1118,18 +1121,49 @@ async function updateWeatherInfo(data) {
         `;
     };
 
+    const buildCompactCard = (name, weather, isToday) => {
+        const label = isToday ? "今日抵達" : "昨日出發";
+        if (!weather || weather.isOutOfRange) {
+            return `
+                <div class="weather-compact-card">
+                    <div class="weather-small-label">${label}</div>
+                    <div class="weather-small-title">${name || '未知'}</div>
+                    <div class="weather-small-temps">--</div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="weather-compact-card">
+                <div class="weather-small-label">${label}</div>
+                <div class="weather-small-title" title="${name}">${name}</div>
+                <div class="weather-small-temps">
+                    <div><span>早</span><strong>${weather.tempAM}</strong></div>
+                    <div><span>午</span><strong>${weather.tempPM}</strong></div>
+                    <div><span>晚</span><strong>${weather.tempNight}</strong></div>
+                </div>
+            </div>
+        `;
+    };
+
     // 4. render
     weatherDiv.innerHTML = `
-        <div style="
-            display:flex;
-            gap:15px;
-            width:100%;
-            box-sizing:border-box;
-            margin:15px 0;
-            padding:5px;
-        ">
-            ${buildWeatherCard(data.prevStay, prevWeather, false)}
-            ${buildWeatherCard(data.stay, stayWeather, true)}
+        <div class="weather-full">
+            <div style="
+                display:flex;
+                gap:15px;
+                width:100%;
+                box-sizing:border-box;
+                margin:15px 0;
+                padding:5px;
+            ">
+                ${buildWeatherCard(data.prevStay, prevWeather, false)}
+                ${buildWeatherCard(data.stay, stayWeather, true)}
+            </div>
+        </div>
+        <div class="weather-compact">
+            ${buildCompactCard(data.prevStay, prevWeather, false)}
+            ${buildCompactCard(data.stay, stayWeather, true)}
         </div>
     `;
 }
