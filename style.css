@@ -250,32 +250,60 @@ body {
 .nav-buttons {
   display: flex;
   flex-wrap: nowrap;
+  gap: 6px;
   overflow-x: auto;
   background: var(--nav-bar-bg);
-  padding: 4px 10px;
+  padding: 7px 10px;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
   transition: background-color 0.3s ease;
 }
 .nav-buttons::-webkit-scrollbar { display: none; }
 
 .nav-btn {
-  flex: 1;
-  min-width: 60px;
+  flex: 0 0 68px;
   min-height: var(--tap-min);
-  background: none;
-  border: none;
-  border-bottom: 3px solid transparent;
-  color: rgba(255,255,255,.6);
-  padding: 0 5px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px;
+  color: rgba(255,255,255,.72);
+  padding: 6px 8px;
   cursor: pointer;
   font-size: 13px;
-  transition: all .2s;
+  transition: transform .15s ease, background-color .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease;
   white-space: nowrap;
   text-align: center;
+  scroll-snap-align: start;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
 }
-.nav-btn:hover  { color: white; background: rgba(255,255,255,.05); }
-.nav-btn.active { color: #1abc9c; border-bottom-color: #1abc9c; font-weight: bold; background: rgba(255,255,255,.1); }
+.nav-btn:hover {
+  color: white;
+  background: rgba(255,255,255,.12);
+  border-color: rgba(255,255,255,.22);
+}
+.nav-btn:active { transform: scale(.97); }
+.nav-btn.active {
+  color: #103b34;
+  border-color: rgba(26,188,156,.9);
+  font-weight: bold;
+  background: #dffaf4;
+  box-shadow: 0 4px 14px rgba(26,188,156,.22);
+}
+.nav-date {
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1.05;
+}
+.nav-day {
+  font-size: 10px;
+  line-height: 1.1;
+  opacity: .72;
+}
 
 /* ---------- Main Layout ---------- */
 #main-container {
@@ -1037,7 +1065,9 @@ input[type="number"]::-webkit-outer-spin-button { opacity: 1; height: 24px; }
   }
 
   /* nav tabs bigger tap target on mobile */
-  .nav-btn { min-height: var(--tap-min); font-size: 12px; }
+  .nav-btn { flex-basis: 64px; min-height: var(--tap-min); }
+  .nav-date { font-size: 13px; }
+  .nav-day { font-size: 9px; }
 
   /* cards full-bleed */
   .timeline-item { border-radius: 0 10px 10px 0; margin-bottom: 10px; }

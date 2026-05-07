@@ -734,14 +734,18 @@ function renderNav() {
         const btn = document.createElement('button');
         btn.className = 'nav-btn';
         const dateParts = (item.date || '').split('/');
-        btn.innerText = dateParts.length >= 2 ? `${dateParts[0]}/${dateParts[1]}` : `Day ${item.day}`;
+        const dateLabel = dateParts.length >= 2 ? `${dateParts[0]}/${dateParts[1]}` : `Day ${item.day}`;
+        btn.innerHTML = `<span class="nav-date">${dateLabel}</span><span class="nav-day">Day ${item.day}</span>`;
         btn.title = `Day ${item.day}: ${item.title || ''}`;
         btn.onclick = () => { if(!isEditingMode) loadDay(index); else alert("請先儲存或取消編輯模式"); };
         container.appendChild(btn);
     });
     // Set active
     const btns = container.querySelectorAll('.nav-btn');
-    if(btns[currentDayIndex]) btns[currentDayIndex].classList.add('active');
+    if(btns[currentDayIndex]) {
+        btns[currentDayIndex].classList.add('active');
+        btns[currentDayIndex].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
 }
 
 function loadDay(index) {
@@ -752,6 +756,7 @@ function loadDay(index) {
     // 1. 處理 Tab 活化狀態
     document.querySelectorAll('.nav-btn').forEach((btn, i) => {
         btn.classList.toggle('active', i === index);
+        if (i === index) btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
     });
 
     // 2. 渲染畫面
