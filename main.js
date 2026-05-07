@@ -18,6 +18,25 @@ window.applyTheme = function(theme) {
         window.updateMapTheme('light');
     }
     localStorage.setItem('theme', theme);
+    
+    // 重新渲染當前內容以反映新的顏色配置
+    if (typeof renderViewMode === 'function') {
+        renderViewMode();
+    }
+    // 重新渲染天氣信息
+    if (itineraryData && itineraryData[currentDayIndex]) {
+        const data = itineraryData[currentDayIndex];
+        const weatherPayload = {
+            date: data.date,
+            stay: data.stay,
+            stayMapKey: data.stayMapKey,
+            prevStay: data.prevStay,
+            prevStayMapKey: data.prevStayMapKey
+        };
+        if (typeof updateWeatherInfo === 'function') {
+            updateWeatherInfo(weatherPayload);
+        }
+    }
 };
 
 window.toggleDarkMode = function() {
@@ -492,6 +511,7 @@ function renderViewMode() {
     const data = itineraryData[currentDayIndex];
     if (!data) return;
     const contentDiv = document.getElementById('itinerary-content');
+    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
 
     // 1. 定義你的專屬 UID
     const adminUID = "eECs2vvipQM0QZTP8UpTUk5Lq7o2";
@@ -499,22 +519,28 @@ function renderViewMode() {
     // 2. 嚴格檢查：必須登入 且 UID 必須是你本人
     const isAdmin = auth.currentUser && auth.currentUser.uid === adminUID;
     
+    const titleColor = isDarkMode ? '#e0e0e0' : '#2c3e50';
+    const metaColor = isDarkMode ? '#aaa' : '#7f8c8d';
+    const readOnlyBg = isDarkMode ? '#2a2a2a' : '#eee';
+    const readOnlyText = isDarkMode ? '#aaa' : '#95a5a6';
+    const readOnlyBorder = isDarkMode ? '#444' : '#ddd';
+    
     // 檢查是否登入，決定顯示編輯按鈕還是提示文字
     const editBtnHtml = isAdmin ?
         `<button class="btn-main" onclick="window.startEditMode()" style="margin-top:10px; width:100%;">✏️ 編輯整日行程</button>` : 
-        `<div style="text-align:center; color:#95a5a6; font-size:12px; padding:10px; background:#eee; border-radius:5px; margin-top:10px;">(唯讀模式，登入後可編輯)</div>`;
+        `<div style="text-align:center; color:${readOnlyText}; font-size:12px; padding:10px; background:${readOnlyBg}; border-radius:5px; margin-top:10px; border: 1px solid ${readOnlyBorder};">(唯讀模式，登入後可編輯)</div>`;
     
     const stayLinkBtn = data.stayLink ? 
         `<a href="${data.stayLink}" target="_blank" style="text-decoration:none; font-size:12px; background:#e67e22; color:white; padding:4px 10px; border-radius:6px; margin-left:10px; font-weight:bold;">🔗 查看預訂</a>` : '';
 
     let html = `
         <div class="day-header">
-            <div style="font-size:12px; color:#7f8c8d;">前一晚住宿: <b>${data.prevStay || '無'}</b></div>
-            <h2 style="margin:5px 0 10px; color:#2c3e50;">Day ${data.day}: ${data.title}</h2>
-            <div style="font-size:13px; margin-bottom:10px;">📅 ${data.date}</div>
+            <div style="font-size:12px; color:${isDarkMode ? '#888' : '#7f8c8d'};">前一晚住宿: <b>${data.prevStay || '無'}</b></div>
+            <h2 style="margin:5px 0 10px; color:${titleColor};">Day ${data.day}: ${data.title}</h2>
+            <div style="font-size:13px; margin-bottom:10px; color:${isDarkMode ? '#b0b0b0' : '#555'};">📅 ${data.date}</div>
             
             <div class="stay-info-container" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <div class="stay-info" style="display:flex; align-items:center;">
+                <div class="stay-info" style="display:flex; align-items:center; color:${isDarkMode ? '#b0b0b0' : '#555'};">
                     🏨 今晚住宿: <b>${data.stay}</b> ${stayLinkBtn}
                 </div>
             </div>
@@ -563,20 +589,20 @@ function renderViewMode() {
                 </div>
                 <div class="item-title" style="font-weight: bold; margin-top: 5px; font-size: 1.1em;">${item.text}</div>
             
-                <div class="item-meta" style="color: #7f8c8d; font-size: 12px; margin-top: 3px;">
+                <div class="item-meta" style="color: ${isDarkMode ? '#888' : '#7f8c8d'}; font-size: 12px; margin-top: 3px;">
                     ${item.hours ? `🕒 開放時間: ${item.hours}` : ''}
                 </div>
     
-                <div class="item-desc" style="margin-top: 8px; font-size: 14px; line-height: 1.5; color: #34495e;">
+                <div class="item-desc" style="margin-top: 8px; font-size: 14px; line-height: 1.5; color: ${isDarkMode ? '#d0d0d0' : '#34495e'};">
                     ${item.desc ? item.desc.replace(/\n/g, '<br>') : ''}
                 </div>
     
-                <div class="links-row" style="margin-top: 12px; border-top: 1px dashed #eee; padding-top: 8px;">
-                    <a href="${mapUrl}" target="_blank" style="text-decoration: none; color: #3498db; font-size: 12px; display: flex; align-items: center; gap: 4px;">
+                <div class="links-row" style="margin-top: 12px; border-top: 1px dashed ${isDarkMode ? '#444' : '#eee'}; padding-top: 8px;">
+                    <a href="${mapUrl}" target="_blank" style="text-decoration: none; color: ${isDarkMode ? '#64b5f6' : '#3498db'}; font-size: 12px; display: flex; align-items: center; gap: 4px;">
                         📍 在 Google Map 查看
                     </a>
                     ${item.link ? `
-                        <a href="${item.link}" target="_blank" style="text-decoration: none; color: #e67e22; font-size: 12px; display: flex; align-items: center; gap: 4px; border-left: 1px solid #ddd; padding-left: 15px;">
+                        <a href="${item.link}" target="_blank" style="text-decoration: none; color: ${isDarkMode ? '#ff9500' : '#e67e22'}; font-size: 12px; display: flex; align-items: center; gap: 4px; border-left: 1px solid ${isDarkMode ? '#444' : '#ddd'}; padding-left: 15px;">
                             🔗 相關連結 / 預訂
                         </a>
                     ` : ''}
@@ -746,49 +772,100 @@ async function fetchWeatherData(lat, lng, dateStr) {
 }
 
 function getWeatherStyle(type) {
-    switch (type) {
-        case "clear":
-            return {
-                bg: "linear-gradient(135deg,#e0f2fe,#bae6fd)",
-                border: "rgba(59,130,246,0.3)",
-                shadow: "0 10px 25px rgba(59,130,246,0.15)"
-            };
-        case "cloud":
-            return {
-                bg: "linear-gradient(135deg,#f5f5f5,#e5e5e5)",
-                border: "rgba(0,0,0,0.08)",
-                shadow: "0 8px 20px rgba(0,0,0,0.08)"
-            };
-        case "rain":
-            return {
-                bg: "linear-gradient(135deg,#dbeafe,#93c5fd)",
-                border: "rgba(37,99,235,0.3)",
-                shadow: "0 10px 25px rgba(37,99,235,0.2)"
-            };
-        case "snow":
-            return {
-                bg: "linear-gradient(135deg,#f0f9ff,#e0f2fe)",
-                border: "rgba(125,211,252,0.4)",
-                shadow: "0 10px 25px rgba(125,211,252,0.2)"
-            };
-        case "storm":
-            return {
-                bg: "linear-gradient(135deg,#1f2937,#374151)",
-                border: "rgba(255,255,255,0.15)",
-                shadow: "0 12px 30px rgba(0,0,0,0.5)"
-            };
-        case "fog":
-            return {
-                bg: "linear-gradient(135deg,#e5e7eb,#d1d5db)",
-                border: "rgba(0,0,0,0.05)",
-                shadow: "0 8px 20px rgba(0,0,0,0.1)"
-            };
-        default:
-            return {
-                bg: "linear-gradient(135deg,#f3f4f6,#e5e7eb)",
-                border: "rgba(0,0,0,0.1)",
-                shadow: "0 8px 20px rgba(0,0,0,0.1)"
-            };
+    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+    
+    if (isDarkMode) {
+        // 深色模式
+        switch (type) {
+            case "clear":
+                return {
+                    bg: "linear-gradient(135deg,#1a3a52,#0d4a6e)",
+                    border: "rgba(100,181,246,0.4)",
+                    shadow: "0 10px 25px rgba(100,181,246,0.1)"
+                };
+            case "cloud":
+                return {
+                    bg: "linear-gradient(135deg,#2a2a2a,#1f1f1f)",
+                    border: "rgba(150,150,150,0.3)",
+                    shadow: "0 8px 20px rgba(0,0,0,0.3)"
+                };
+            case "rain":
+                return {
+                    bg: "linear-gradient(135deg,#1a3a52,#0d4a6e)",
+                    border: "rgba(100,181,246,0.4)",
+                    shadow: "0 10px 25px rgba(100,181,246,0.15)"
+                };
+            case "snow":
+                return {
+                    bg: "linear-gradient(135deg,#1a2a3a,#0d3a52)",
+                    border: "rgba(144,202,249,0.4)",
+                    shadow: "0 10px 25px rgba(144,202,249,0.1)"
+                };
+            case "storm":
+                return {
+                    bg: "linear-gradient(135deg,#2a2a3a,#1a1a2a)",
+                    border: "rgba(100,181,246,0.3)",
+                    shadow: "0 12px 30px rgba(0,0,0,0.5)"
+                };
+            case "fog":
+                return {
+                    bg: "linear-gradient(135deg,#252525,#1a1a1a)",
+                    border: "rgba(130,130,130,0.3)",
+                    shadow: "0 8px 20px rgba(0,0,0,0.3)"
+                };
+            default:
+                return {
+                    bg: "linear-gradient(135deg,#2a2a2a,#1f1f1f)",
+                    border: "rgba(100,100,100,0.3)",
+                    shadow: "0 8px 20px rgba(0,0,0,0.3)"
+                };
+        }
+    } else {
+        // 淺色模式
+        switch (type) {
+            case "clear":
+                return {
+                    bg: "linear-gradient(135deg,#e0f2fe,#bae6fd)",
+                    border: "rgba(59,130,246,0.3)",
+                    shadow: "0 10px 25px rgba(59,130,246,0.15)"
+                };
+            case "cloud":
+                return {
+                    bg: "linear-gradient(135deg,#f5f5f5,#e5e5e5)",
+                    border: "rgba(0,0,0,0.08)",
+                    shadow: "0 8px 20px rgba(0,0,0,0.08)"
+                };
+            case "rain":
+                return {
+                    bg: "linear-gradient(135deg,#dbeafe,#93c5fd)",
+                    border: "rgba(37,99,235,0.3)",
+                    shadow: "0 10px 25px rgba(37,99,235,0.2)"
+                };
+            case "snow":
+                return {
+                    bg: "linear-gradient(135deg,#f0f9ff,#e0f2fe)",
+                    border: "rgba(125,211,252,0.4)",
+                    shadow: "0 10px 25px rgba(125,211,252,0.2)"
+                };
+            case "storm":
+                return {
+                    bg: "linear-gradient(135deg,#1f2937,#374151)",
+                    border: "rgba(255,255,255,0.15)",
+                    shadow: "0 12px 30px rgba(0,0,0,0.5)"
+                };
+            case "fog":
+                return {
+                    bg: "linear-gradient(135deg,#e5e7eb,#d1d5db)",
+                    border: "rgba(0,0,0,0.05)",
+                    shadow: "0 8px 20px rgba(0,0,0,0.1)"
+                };
+            default:
+                return {
+                    bg: "linear-gradient(135deg,#f3f4f6,#e5e7eb)",
+                    border: "rgba(0,0,0,0.1)",
+                    shadow: "0 8px 20px rgba(0,0,0,0.1)"
+                };
+        }
     }
 }
 
@@ -844,11 +921,12 @@ async function updateWeatherInfo(data) {
 
         const style = getWeatherStyle(weather?.type);
         const warning = getWeatherWarning(weather?.type);
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
 
-        const textColor = weather?.type === "storm" ? "#fff" : "#111";
+        const textColor = weather?.type === "storm" ? (isDarkMode ? "#e0e0e0" : "#fff") : (isDarkMode ? "#e0e0e0" : "#111");
         const boxBg = weather?.type === "storm"
-            ? "rgba(255,255,255,0.1)"
-            : "rgba(255,255,255,0.4)";
+            ? (isDarkMode ? "rgba(100,100,100,0.2)" : "rgba(255,255,255,0.1)")
+            : (isDarkMode ? "rgba(100,100,100,0.2)" : "rgba(255,255,255,0.4)");
 
         const label = isToday ? "今日抵達" : "昨日出發";
 
