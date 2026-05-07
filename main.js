@@ -1422,8 +1422,8 @@ async function updateWeatherInfo(data) {
         const style = getWeatherStyle(weather?.type);
         const currentHour = new Date().getHours();
         const tempSlot = currentHour < 12
-            ? { label: '早', value: weather?.tempAM }
-            : (currentHour < 18 ? { label: '午', value: weather?.tempPM } : { label: '晚', value: weather?.tempNight });
+            ? 'am'
+            : (currentHour < 18 ? 'pm' : 'night');
         if (!weather || weather.isOutOfRange) {
             return `
                 <div class="weather-compact-card" style="--weather-accent:${style.border};">
@@ -1446,8 +1446,10 @@ async function updateWeatherInfo(data) {
                         <div class="weather-small-desc">${weather.icon} ${weather.weather}</div>
                     </div>
                 </div>
-                <div class="weather-small-temps weather-single-temp">
-                    <div><span>${tempSlot.label}</span><strong>${tempSlot.value || '--'}</strong></div>
+                <div class="weather-small-temps">
+                    <div class="weather-temp-chip ${tempSlot === 'am' ? 'is-current' : ''}"><span>早</span><strong>${weather.tempAM}</strong></div>
+                    <div class="weather-temp-chip ${tempSlot === 'pm' ? 'is-current' : ''}"><span>午</span><strong>${weather.tempPM}</strong></div>
+                    <div class="weather-temp-chip ${tempSlot === 'night' ? 'is-current' : ''}"><span>晚</span><strong>${weather.tempNight}</strong></div>
                 </div>
             </div>
         `;
