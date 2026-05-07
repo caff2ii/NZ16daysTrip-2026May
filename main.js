@@ -40,7 +40,18 @@ window.updateMapTheme = function(theme) {
 };
 
 // 頁面載入時初始化 Dark Mode
-document.addEventListener('DOMContentLoaded', window.initializeDarkMode);
+document.addEventListener('DOMContentLoaded', function() {
+    window.initializeDarkMode();
+    
+    // 添加按鈕事件監聽器
+    const toggleBtn = document.getElementById('dark-mode-toggle');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.toggleDarkMode();
+        });
+    }
+});
 
 // --- 完整管理員權限控制邏輯 ---
 
