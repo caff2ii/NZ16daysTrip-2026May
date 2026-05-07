@@ -556,6 +556,102 @@ body.map-fullscreen.map-shrunk #map-container {
   box-shadow: 0 10px 26px rgba(26,188,156,0.22), var(--shadow-sm);
 }
 
+.accommodation-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.accommodation-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid #9b59b6;
+  border-radius: var(--radius-card);
+  padding: 14px;
+  box-shadow: var(--shadow-card);
+  transition: transform .15s, box-shadow .2s ease, border-color .2s ease, background-color .3s ease;
+}
+
+.accommodation-card.has-map-point {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.accommodation-card.has-map-point:hover,
+.accommodation-card.has-map-point:focus-visible,
+.accommodation-card.is-map-focused {
+  border-left-color: #1abc9c;
+  outline: none;
+  box-shadow: 0 10px 26px rgba(26,188,156,0.2), var(--shadow-sm);
+}
+
+.accommodation-card:active {
+  transform: scale(.99);
+}
+
+.accommodation-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.accommodation-night {
+  background: #f4ecf7;
+  color: #8e44ad;
+  border: 1px solid #ead1f2;
+  border-radius: 20px;
+  padding: 3px 9px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.accommodation-date {
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.accommodation-title {
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.accommodation-meta {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.accommodation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border-color);
+  font-size: 12px;
+}
+
+.accommodation-actions a {
+  color: #3498db;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.accommodation-actions span {
+  color: var(--text-tertiary);
+}
+
+html[data-theme="dark"] .accommodation-night {
+  background: rgba(155,89,182,0.18);
+  color: #d6a2e8;
+  border-color: rgba(155,89,182,0.35);
+}
+
 .timeline-item::before {
   content: '';
   position: absolute;

@@ -23,6 +23,7 @@ function buildHamburgerMenuHtml({ isAdmin, displayName }) {
 
     return `
         ${authButton}
+        <button class="hamburger-dropdown-item" onclick="window.showAccommodationOverview()">住宿總覽</button>
         <button class="hamburger-dropdown-item" onclick="window.enableOfflineMode()">離線模式</button>
         <button class="hamburger-dropdown-item danger" onclick="window.clearAppCache()">清除快取</button>
         <div class="hamburger-dropdown-status">
@@ -175,10 +176,14 @@ window.applyTheme = function(theme) {
     
     // 重新渲染當前內容以反映新的顏色配置
     if (typeof renderViewMode === 'function') {
-        renderViewMode();
+        if (currentViewMode === 'accommodation' && typeof window.showAccommodationOverview === 'function') {
+            window.showAccommodationOverview({ skipMapUpdate: true });
+        } else {
+            renderViewMode();
+        }
     }
     // 重新渲染天氣信息
-    if (itineraryData && itineraryData[currentDayIndex]) {
+    if (currentViewMode === 'day' && itineraryData && itineraryData[currentDayIndex]) {
         const data = itineraryData[currentDayIndex];
         const weatherPayload = {
             date: data.date,
@@ -348,7 +353,9 @@ onAuthStateChanged(auth, (user) => {
         }
     }
 
-    if (typeof loadDay === 'function') {
+    if (currentViewMode === 'accommodation' && typeof window.showAccommodationOverview === 'function') {
+        window.showAccommodationOverview({ skipMapUpdate: true });
+    } else if (typeof loadDay === 'function') {
         loadDay(currentDayIndex);
     }
 });
@@ -496,6 +503,7 @@ let map, currentLayerGroup;
 let routeMarkersByKey = {};
 let suppressRouteFitUntil = 0;
 let keepMapFocusUntil = 0;
+let currentViewMode = 'day';
 let itineraryData = [];
 let coords = {};
 let coordNames = {};
@@ -737,6 +745,7 @@ function renderNav() {
 }
 
 function loadDay(index) {
+    currentViewMode = 'day';
     currentDayIndex = index;
     isEditingMode = false;
     
@@ -899,8 +908,74 @@ function renderViewMode() {
     bindTimelineMapFocus(contentDiv);
 }
 
+window.showAccommodationOverview = function(options = {}) {
+    if (isEditingMode) {
+        alert("請先儲存或取消編輯模式");
+        return;
+    }
+
+    currentViewMode = 'accommodation';
+    const contentDiv = document.getElementById('itinerary-content');
+    const weatherDiv = document.getElementById('weather-display');
+    const hamburgerDropdown = document.getElementById('hamburger-dropdown');
+    if (weatherDiv) weatherDiv.style.display = 'none';
+    if (hamburgerDropdown) hamburgerDropdown.classList.remove('show');
+
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+
+    const stayKeys = [];
+    const cards = itineraryData.map((day, index) => {
+        const stayKey = day.stayMapKey || '';
+        const hasMapPoint = stayKey && coords[stayKey];
+        if (hasMapPoint && !stayKeys.includes(stayKey)) stayKeys.push(stayKey);
+
+        const mapAttrs = hasMapPoint ? ` data-map-key="${stayKey}" role="button" tabindex="0" title="在地圖查看住宿位置"` : '';
+        const mapClass = hasMapPoint ? ' has-map-point' : '';
+        const dateText = day.date || `Day ${day.day}`;
+        const mapName = coordNames[stayKey] || stayKey;
+        const mapUrl = hasMapPoint
+            ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapName + ' New Zealand')}`
+            : '';
+
+        return `
+            <div class="accommodation-card${mapClass}"${mapAttrs}>
+                <div class="accommodation-card-top">
+                    <span class="accommodation-night">Day ${day.day}</span>
+                    <span class="accommodation-date">${dateText}</span>
+                </div>
+                <div class="accommodation-title">${day.stay || '未設定住宿'}</div>
+                <div class="accommodation-meta">Day ${day.day}: ${day.title || ''}</div>
+                <div class="accommodation-actions">
+                    ${hasMapPoint ? `<a href="${mapUrl}" target="_blank">在 Google Map 查看</a>` : `<span>未設定地圖座標</span>`}
+                    ${day.stayLink ? `<a href="${day.stayLink}" target="_blank">查看預訂</a>` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    contentDiv.innerHTML = `
+        <div class="day-header accommodation-overview-header">
+            <div style="font-size:12px; color:var(--text-tertiary);">住宿總覽</div>
+            <h2 style="margin:5px 0 8px;">全程住宿一覽</h2>
+            <div style="font-size:13px; color:var(--text-secondary);">撳住宿卡可以將地圖 zoom 去該住宿位置。</div>
+            <button class="btn-main" style="margin-top:12px; width:100%;" onclick="loadDay(${currentDayIndex})">返回當日行程</button>
+        </div>
+        <div class="accommodation-list">
+            ${cards}
+        </div>
+    `;
+
+    bindTimelineMapFocus(contentDiv);
+    if (!options.skipMapUpdate) {
+        updateMapWithRouting(stayKeys, '#9b59b6');
+    }
+
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) sidebar.scrollTo({ top: 0, behavior: 'auto' });
+};
+
 function bindTimelineMapFocus(contentDiv) {
-    contentDiv.querySelectorAll('.timeline-item[data-map-key]').forEach(card => {
+    contentDiv.querySelectorAll('.timeline-item[data-map-key], .accommodation-card[data-map-key]').forEach(card => {
         let touchFocusedAt = 0;
         let pointerStart = null;
         const focusFromEvent = (event) => {
@@ -942,7 +1017,7 @@ window.focusMapPoint = function(mapKey, sourceCard) {
     const useFloatingMap = wasShrunk && window.matchMedia('(max-width: 768px)').matches;
     suppressRouteFitUntil = Date.now() + 1200;
 
-    document.querySelectorAll('.timeline-item.is-map-focused').forEach(card => {
+    document.querySelectorAll('.is-map-focused').forEach(card => {
         card.classList.remove('is-map-focused');
     });
     if (sourceCard) sourceCard.classList.add('is-map-focused');
