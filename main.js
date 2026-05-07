@@ -340,6 +340,7 @@ const defaultItinerary = [
 // --- 2. 系統變數 ---
 let map, currentLayerGroup;
 let routeMarkersByKey = {};
+let suppressRouteFitUntil = 0;
 let itineraryData = [];
 let coords = {};
 let coordNames = {};
@@ -412,6 +413,7 @@ async function init() {
     // - Fix: always re-fit to the latest route bounds whenever the container size changes
     // ─────────────────────────────────────────────────
     window._fitLastBounds = function () {
+        if (Date.now() < suppressRouteFitUntil) return;
         if (!map || !lastRouteBounds) return;
         if (typeof lastRouteBounds.isValid === 'function' && !lastRouteBounds.isValid()) return;
         try {
@@ -429,9 +431,13 @@ async function init() {
             // Debounce to avoid repeated fits during transition animation
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
+                if (Date.now() < suppressRouteFitUntil) return;
                 window._fitLastBounds && window._fitLastBounds();
                 // Extra delayed pass helps when CSS transition hasn't finished yet
-                setTimeout(() => window._fitLastBounds && window._fitLastBounds(), 350);
+                setTimeout(() => {
+                    if (Date.now() < suppressRouteFitUntil) return;
+                    window._fitLastBounds && window._fitLastBounds();
+                }, 350);
             }, 200);
         });
 
@@ -445,6 +451,7 @@ async function init() {
     }
 
     window.toggleMapShrink = function () {
+        document.body.classList.remove('map-card-focus');
         const isShrunk = document.body.classList.toggle('map-shrunk');
         updateMapToggleIcon();
         if (!isShrunk) {
@@ -454,6 +461,7 @@ async function init() {
 
     window.restoreMapPosition = function () {
         document.body.classList.remove('map-shrunk');
+        document.body.classList.remove('map-card-focus');
         document.body.classList.remove('map-fullscreen');
         updateMapToggleIcon();
         window._fitLastBounds && window._fitLastBounds();
@@ -461,6 +469,7 @@ async function init() {
 
     window.toggleMapFullscreen = function () {
         const isFullscreen = document.body.classList.toggle('map-fullscreen');
+        document.body.classList.remove('map-card-focus');
         if (isFullscreen) {
             document.body.classList.remove('map-shrunk');
         }
@@ -481,6 +490,7 @@ async function init() {
                     const wasShrunk = document.body.classList.contains('map-shrunk');
                     const shouldShrink = scrollTop > THRESHOLD;
                     if (wasShrunk !== shouldShrink) {
+                        if (!shouldShrink) document.body.classList.remove('map-card-focus');
                         document.body.classList.toggle('map-shrunk', shouldShrink);
                         updateMapToggleIcon();
                         // layout 改了才 invalidate，ResizeObserver 會接手 fitBounds
@@ -713,9 +723,30 @@ function renderViewMode() {
 
 function bindTimelineMapFocus(contentDiv) {
     contentDiv.querySelectorAll('.timeline-item[data-map-key]').forEach(card => {
-        card.addEventListener('click', (event) => {
+        let touchFocusedAt = 0;
+        let pointerStart = null;
+        const focusFromEvent = (event) => {
             if (event.target.closest('a, button, input, select, textarea')) return;
             window.focusMapPoint(card.dataset.mapKey, card);
+        };
+
+        card.addEventListener('click', (event) => {
+            if (Date.now() - touchFocusedAt < 500) return;
+            focusFromEvent(event);
+        });
+        card.addEventListener('pointerdown', (event) => {
+            if (event.pointerType === 'mouse') return;
+            pointerStart = { x: event.clientX, y: event.clientY };
+        });
+        card.addEventListener('pointerup', (event) => {
+            if (event.pointerType === 'mouse') return;
+            if (pointerStart) {
+                const moved = Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y);
+                pointerStart = null;
+                if (moved > 12) return;
+            }
+            touchFocusedAt = Date.now();
+            focusFromEvent(event);
         });
 
         card.addEventListener('keydown', (event) => {
@@ -730,13 +761,17 @@ window.focusMapPoint = function(mapKey, sourceCard) {
     const point = coords?.[mapKey];
     if (!map || !point) return;
     const wasShrunk = document.body.classList.contains('map-shrunk');
+    const useFloatingMap = wasShrunk && window.matchMedia('(max-width: 768px)').matches;
+    suppressRouteFitUntil = Date.now() + 1200;
 
     document.querySelectorAll('.timeline-item.is-map-focused').forEach(card => {
         card.classList.remove('is-map-focused');
     });
     if (sourceCard) sourceCard.classList.add('is-map-focused');
 
-    if (wasShrunk) {
+    if (useFloatingMap) {
+        document.body.classList.add('map-card-focus');
+    } else if (wasShrunk) {
         document.body.classList.remove('map-shrunk');
         const toggleBtn = document.getElementById('map-toggle-btn');
         if (toggleBtn) toggleBtn.textContent = '▲';

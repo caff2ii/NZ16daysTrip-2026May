@@ -530,6 +530,7 @@ body.map-fullscreen.map-shrunk #map-container {
 
 .timeline-item.has-map-point {
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .timeline-item.has-map-point:hover,
@@ -876,6 +877,24 @@ input[type="number"]::-webkit-outer-spin-button { opacity: 1; height: 24px; }
 
   /* when JS adds .map-shrunk, collapse map */
   body.map-shrunk #map-container { height: 100px; }
+
+  body.map-shrunk.map-card-focus #main-container::after {
+    content: "";
+    flex: none;
+    width: 100%;
+    height: 100px;
+  }
+
+  body.map-shrunk.map-card-focus #map-container {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 240px !important;
+    z-index: 1100;
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.22);
+  }
 
   body.map-shrunk #admin-bar,
   body.map-shrunk #top-bar .header {
