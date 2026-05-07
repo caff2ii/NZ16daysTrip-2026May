@@ -558,7 +558,9 @@ function renderNav() {
     itineraryData.forEach((item, index) => {
         const btn = document.createElement('button');
         btn.className = 'nav-btn';
-        btn.innerText = `Day ${item.day}`;
+        const dateParts = (item.date || '').split('/');
+        btn.innerText = dateParts.length >= 2 ? `${dateParts[0]}/${dateParts[1]}` : `Day ${item.day}`;
+        btn.title = `Day ${item.day}: ${item.title || ''}`;
         btn.onclick = () => { if(!isEditingMode) loadDay(index); else alert("請先儲存或取消編輯模式"); };
         container.appendChild(btn);
     });
