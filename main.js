@@ -530,7 +530,7 @@ function renderViewMode() {
         if (displayDrive && idx < data.schedule.length - 1) {
             html += `
                 <div class="drive-between">
-                    <span class="drive-between-chip">🚗 <b>下段車程</b> ${displayDrive}</span>
+                    <span class="drive-between-chip">🚗 <b>路程</b> ${displayDrive}</span>
                 </div>
             `;
         }
