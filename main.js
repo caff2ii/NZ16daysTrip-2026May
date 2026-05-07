@@ -469,7 +469,7 @@ function renderViewMode() {
         </div>
     `;
     
-    data.schedule.forEach(item => {
+    data.schedule.forEach((item, idx) => {
         const typeClass = item.type === 'drive' ? 'drive' : (item.type === 'hotel' ? 'hotel' : '');
         const mapQuery = encodeURIComponent(item.text + " New Zealand");
         const mapUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
@@ -513,12 +513,6 @@ function renderViewMode() {
                     ${item.desc ? item.desc.replace(/\n/g, '<br>') : ''}
                 </div>
     
-                ${displayDrive ? `
-                    <div class="drive-info">
-                        🚗 <b>下段車程:</b> ${displayDrive}
-                    </div>
-                ` : ''}
-    
                 <div class="links-row" style="margin-top: 12px; border-top: 1px dashed #eee; padding-top: 8px;">
                     <a href="${mapUrl}" target="_blank" style="text-decoration: none; color: #3498db; font-size: 12px; display: flex; align-items: center; gap: 4px;">
                         📍 在 Google Map 查看
@@ -531,6 +525,15 @@ function renderViewMode() {
                 </div>
             </div>
         `;
+
+        // 把「下段車程」放喺 card 與 card 之間（最後一張 card 後唔需要顯示）
+        if (displayDrive && idx < data.schedule.length - 1) {
+            html += `
+                <div class="drive-between">
+                    <span class="drive-between-chip">🚗 <b>下段車程</b> ${displayDrive}</span>
+                </div>
+            `;
+        }
     });
     
     contentDiv.innerHTML = html;

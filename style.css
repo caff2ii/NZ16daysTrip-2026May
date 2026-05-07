@@ -229,6 +229,35 @@ body {
   border: 1px solid #fad7a0; font-weight: bold;
 }
 
+/* Drive time shown BETWEEN itinerary cards */
+.drive-between {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: -6px 0 10px; /* visually sit between two cards */
+  padding: 0 6px;
+}
+.drive-between::before,
+.drive-between::after {
+  content: '';
+  flex: 1;
+  border-top: 1px dashed #e0e0e0;
+}
+.drive-between-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 10px;
+  padding: 6px 12px;
+  background: #fdf2e9;
+  color: #e67e22;
+  border: 1px solid #fad7a0;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
 /* Links row */
 .links-row {
   display: flex; flex-wrap: wrap; gap: 8px;
