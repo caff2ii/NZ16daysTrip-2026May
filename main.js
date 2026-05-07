@@ -90,8 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
         const mapToggleBtn = document.getElementById('map-toggle-btn');
-        const mapFitBtn = document.getElementById('map-fit-btn');
-        const mapZoomMaxBtn = document.getElementById('map-zoommax-btn');
+        const mapFullscreenBtn = document.getElementById('map-fullscreen-btn');
 
         if (mapToggleBtn) {
             mapToggleBtn.addEventListener('click', function(e) {
@@ -99,14 +98,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.toggleMapShrink();
             });
         }
-        if (mapFitBtn) {
-            mapFitBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                window.restoreMapPosition();
-            });
-        }
-        if (mapZoomMaxBtn) {
-            mapZoomMaxBtn.addEventListener('click', function(e) {
+        if (mapFullscreenBtn) {
+            mapFullscreenBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 window.toggleMapFullscreen();
             });
@@ -970,20 +963,15 @@ function getWeatherWarning(type) {
 async function updateWeatherInfo(data) {
     const weatherDiv = document.getElementById('weather-display');
     if (!weatherDiv) return;
-    // Leaving edit mode previously hides this; ensure it's visible in view mode.
     weatherDiv.style.display = 'block';
 
-    // 1. 日期處理
     const rawDate = data.date || "10/05/2026";
     const dateParts = rawDate.split('/');
     const travelDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
 
-    // 2. key → coords
     const stayKey = data.stayMapKey;
     const prevKey = data.prevStayMapKey;
-
     const getCoords = (key) => coords?.[key];
-
     const stayCoords = getCoords(stayKey);
     const prevCoords = getCoords(prevKey);
 
@@ -991,24 +979,14 @@ async function updateWeatherInfo(data) {
     let prevWeather = null;
 
     if (stayCoords) {
-        stayWeather = await fetchWeatherData(
-            stayCoords[0],
-            stayCoords[1],
-            travelDate
-        );
+        stayWeather = await fetchWeatherData(stayCoords[0], stayCoords[1], travelDate);
     }
 
     if (prevCoords) {
-        prevWeather = await fetchWeatherData(
-            prevCoords[0],
-            prevCoords[1],
-            travelDate
-        );
+        prevWeather = await fetchWeatherData(prevCoords[0], prevCoords[1], travelDate);
     }
 
-    // 3. card builder（用你已有 style + warning）
     const buildWeatherCard = (name, weather, isToday) => {
-
         const style = getWeatherStyle(weather?.type);
         const warning = getWeatherWarning(weather?.type);
         const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -1057,11 +1035,9 @@ async function updateWeatherInfo(data) {
                 border:1px solid ${style.border};
                 min-width:0;
             ">
-
                 <div style="font-size:11px;font-weight:bold;opacity:0.8;letter-spacing:1px;">
                     ${label}
                 </div>
-
                 <div style="
                     font-size:15px;
                     font-weight:900;
@@ -1072,11 +1048,9 @@ async function updateWeatherInfo(data) {
                 " title="${name}">
                     ${name}
                 </div>
-
                 <div style="font-size:26px;margin-bottom:6px;">
                     ${weather.icon} ${weather.weather}
                 </div>
-
                 ${warning ? `
                     <div style="
                         font-size:11px;
@@ -1087,7 +1061,6 @@ async function updateWeatherInfo(data) {
                         ${warning}
                     </div>
                 ` : ""}
-
                 <div style="
                     background:${boxBg};
                     border-radius:20px;
@@ -1101,7 +1074,6 @@ async function updateWeatherInfo(data) {
                     <span>🌅 ${weather.sunrise}</span>
                     <span>🌇 ${weather.sunset}</span>
                 </div>
-
                 <div style="display:flex;gap:6px;">
                     <div style="flex:1;background:${boxBg};border-radius:10px;padding:6px 0;">
                         <div style="font-size:10px;opacity:0.8;">早</div>
@@ -1116,7 +1088,6 @@ async function updateWeatherInfo(data) {
                         <div style="font-size:13px;font-weight:900;">${weather.tempNight}</div>
                     </div>
                 </div>
-
             </div>
         `;
     };
@@ -1146,7 +1117,6 @@ async function updateWeatherInfo(data) {
         `;
     };
 
-    // 4. render
     weatherDiv.innerHTML = `
         <div class="weather-full">
             <div style="
