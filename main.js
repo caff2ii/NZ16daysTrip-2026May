@@ -729,23 +729,32 @@ function bindTimelineMapFocus(contentDiv) {
 window.focusMapPoint = function(mapKey, sourceCard) {
     const point = coords?.[mapKey];
     if (!map || !point) return;
+    const wasShrunk = document.body.classList.contains('map-shrunk');
 
     document.querySelectorAll('.timeline-item.is-map-focused').forEach(card => {
         card.classList.remove('is-map-focused');
     });
     if (sourceCard) sourceCard.classList.add('is-map-focused');
 
-    requestAnimationFrame(() => {
-        map.invalidateSize();
-        map.flyTo(point, Math.max(map.getZoom(), 13), {
-            animate: true,
-            duration: 0.7
-        });
+    if (wasShrunk) {
+        document.body.classList.remove('map-shrunk');
+        const toggleBtn = document.getElementById('map-toggle-btn');
+        if (toggleBtn) toggleBtn.textContent = '▲';
+    }
 
-        const marker = routeMarkersByKey[mapKey]?.[0];
-        if (marker) {
-            setTimeout(() => marker.openPopup(), 450);
-        }
+    requestAnimationFrame(() => {
+        setTimeout(() => {
+            map.invalidateSize();
+            map.flyTo(point, Math.max(map.getZoom(), 13), {
+                animate: true,
+                duration: 0.7
+            });
+
+            const marker = routeMarkersByKey[mapKey]?.[0];
+            if (marker) {
+                setTimeout(() => marker.openPopup(), 450);
+            }
+        }, wasShrunk ? 320 : 0);
     });
 };
 
