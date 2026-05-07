@@ -1,39 +1,46 @@
 import { db, ref, set, onValue, get, auth, provider, signInWithRedirect, getRedirectResult, signInWithPopup, onAuthStateChanged, signOut } from './firebase-config.js';
 
 // ========== DARK MODE 管理 ==========
-function initializeDarkMode() {
+window.initializeDarkMode = function() {
     const savedTheme = localStorage.getItem('theme') || 'light';
-    applyTheme(savedTheme);
-}
+    window.applyTheme(savedTheme);
+};
 
-function applyTheme(theme) {
+window.applyTheme = function(theme) {
     const html = document.documentElement;
     if (theme === 'dark') {
         html.setAttribute('data-theme', 'dark');
-        updateToggleIcon('☀️');
+        window.updateToggleIcon('☀️');
+        window.updateMapTheme('dark');
     } else {
         html.removeAttribute('data-theme');
-        updateToggleIcon('🌙');
+        window.updateToggleIcon('🌙');
+        window.updateMapTheme('light');
     }
     localStorage.setItem('theme', theme);
-}
+};
 
-function toggleDarkMode() {
+window.toggleDarkMode = function() {
     const html = document.documentElement;
     const currentTheme = html.getAttribute('data-theme');
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    applyTheme(newTheme);
-}
+    window.applyTheme(newTheme);
+};
 
-function updateToggleIcon(icon) {
+window.updateToggleIcon = function(icon) {
     const toggleBtn = document.getElementById('dark-mode-toggle');
     if (toggleBtn) {
         toggleBtn.textContent = icon;
     }
-}
+};
+
+window.updateMapTheme = function(theme) {
+    // CSS will handle the map theme switching automatically
+    // No JS action needed as html[data-theme] triggers CSS filter
+};
 
 // 頁面載入時初始化 Dark Mode
-document.addEventListener('DOMContentLoaded', initializeDarkMode);
+document.addEventListener('DOMContentLoaded', window.initializeDarkMode);
 
 // --- 完整管理員權限控制邏輯 ---
 
@@ -262,6 +269,7 @@ let lastRouteBounds = null; // Leaflet LatLngBounds for current day route (used 
 async function init() {
     // 1. Map Setup (保持不變)
     map = L.map('map').setView([-43.5321, 172.6362], 7);
+    window.map = map; // 存储到 window 以供 Dark Mode 使用
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
     currentLayerGroup = L.layerGroup().addTo(map);
 

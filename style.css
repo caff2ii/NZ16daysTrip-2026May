@@ -110,16 +110,22 @@ body {
   border-radius: 4px;
   cursor: pointer;
   min-height: 28px;
+  min-width: 28px;
   font-size: 14px;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  transition: background-color 0.3s ease, transform 0.2s ease, opacity 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .dark-mode-toggle:hover {
-  opacity: 0.8;
-  transform: scale(1.05);
+  opacity: 0.9;
+  transform: scale(1.08);
+}
+
+.dark-mode-toggle:active {
+  transform: scale(0.95);
 }
 
 #gemini-admin-tools {
@@ -613,6 +619,33 @@ input[type="number"]::-webkit-outer-spin-button { opacity: 1; height: 24px; }
     border-radius: var(--radius-card) var(--radius-card) 0 0;
     max-height: 88vh;
   }
+}
+
+/* ---------- Leaflet Map Dark Mode ---------- */
+html[data-theme="dark"] #map {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95);
+}
+
+html[data-theme="dark"] .leaflet-control,
+html[data-theme="dark"] .leaflet-popup-content-wrapper {
+  filter: invert(1) hue-rotate(180deg) !important;
+}
+
+html[data-theme="dark"] .leaflet-popup-content,
+html[data-theme="dark"] .leaflet-control-attribution {
+  color: #e0e0e0 !important;
+}
+
+html[data-theme="dark"] .leaflet-control-zoom-in,
+html[data-theme="dark"] .leaflet-control-zoom-out {
+  background-color: #1a1f2e !important;
+  color: #e0e0e0 !important;
+  border: 1px solid #404d5c !important;
+}
+
+html[data-theme="dark"] .leaflet-control-zoom-in:hover,
+html[data-theme="dark"] .leaflet-control-zoom-out:hover {
+  background-color: #252d3d !important;
 }
 
 /* ---------- Utility ---------- */
