@@ -749,6 +749,8 @@ function getWeatherWarning(type) {
 async function updateWeatherInfo(data) {
     const weatherDiv = document.getElementById('weather-display');
     if (!weatherDiv) return;
+    // Leaving edit mode previously hides this; ensure it's visible in view mode.
+    weatherDiv.style.display = 'block';
 
     // 1. 日期處理
     const rawDate = data.date || "10/05/2026";
