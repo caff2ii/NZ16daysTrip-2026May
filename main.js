@@ -3,6 +3,7 @@ import { db, ref, set, onValue, get, auth, provider, signInWithRedirect, getRedi
 const APP_CACHE_NAME = 'nz-trip-app-v121';
 const OFFLINE_SNAPSHOT_KEY = 'nz-trip-offline-snapshot';
 const OFFLINE_MODE_KEY = 'nz-trip-offline-mode';
+const WEATHER_CACHE_KEY = 'nz-trip-weather-cache-v1';
 const APP_SHELL_FILES = [
     './',
     './index.html',
@@ -58,6 +59,55 @@ function loadOfflineSnapshot() {
     }
 }
 
+function getWeatherCache() {
+    try {
+        return JSON.parse(localStorage.getItem(WEATHER_CACHE_KEY) || '{}');
+    } catch (e) {
+        return {};
+    }
+}
+
+function getWeatherCacheKey(lat, lng, dateStr) {
+    return `${Number(lat).toFixed(4)},${Number(lng).toFixed(4)}:${dateStr}`;
+}
+
+function getCachedWeather(lat, lng, dateStr) {
+    const cache = getWeatherCache();
+    return cache[getWeatherCacheKey(lat, lng, dateStr)]?.data || null;
+}
+
+function setCachedWeather(lat, lng, dateStr, data) {
+    if (!data) return;
+    try {
+        const cache = getWeatherCache();
+        cache[getWeatherCacheKey(lat, lng, dateStr)] = {
+            data,
+            savedAt: new Date().toISOString()
+        };
+        localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(cache));
+    } catch (e) {
+        console.warn('Weather cache save failed:', e);
+    }
+}
+
+async function cacheAllTripWeather() {
+    const jobs = [];
+    itineraryData.forEach(day => {
+        const dateParts = (day.date || '').split('/');
+        if (dateParts.length < 3) return;
+        const travelDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+        [day.prevStayMapKey, day.stayMapKey].forEach(key => {
+            const point = coords?.[key];
+            if (!point) return;
+            jobs.push(() => fetchWeatherData(point[0], point[1], travelDate));
+        });
+    });
+
+    for (const job of jobs) {
+        await job();
+    }
+}
+
 window.logoutAdmin = function() {
     signOut(auth).then(() => location.reload());
 };
@@ -73,6 +123,7 @@ window.enableOfflineMode = async function() {
         const cache = await caches.open(APP_CACHE_NAME);
         await cache.addAll(APP_SHELL_FILES);
         saveOfflineSnapshot();
+        await cacheAllTripWeather();
         localStorage.setItem(OFFLINE_MODE_KEY, '1');
         alert('離線模式已準備好。之後無網絡時可開啟已快取的行程。');
     } catch (e) {
@@ -95,6 +146,7 @@ window.clearAppCache = async function() {
         }
         localStorage.removeItem(OFFLINE_SNAPSHOT_KEY);
         localStorage.removeItem(OFFLINE_MODE_KEY);
+        localStorage.removeItem(WEATHER_CACHE_KEY);
         alert('快取已清除。');
     } catch (e) {
         console.error('Clear cache failed:', e);
@@ -1016,6 +1068,9 @@ function getWeatherMeta(code) {
 
 // --- 【修改 1】：更新 fetchWeatherData，攔截「超過預測範圍」的錯誤 ---
 async function fetchWeatherData(lat, lng, dateStr) {
+    const cached = getCachedWeather(lat, lng, dateStr);
+    if (cached) return cached;
+
     try {
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=sunrise,sunset,weathercode&hourly=temperature_2m&timezone=auto&start_date=${dateStr}&end_date=${dateStr}`;
         
@@ -1029,7 +1084,9 @@ async function fetchWeatherData(lat, lng, dateStr) {
             } catch (e) {}
 
             if (errorJson?.reason?.includes("out of allowed range")) {
-                return { isOutOfRange: true };
+                const outOfRange = { isOutOfRange: true };
+                setCachedWeather(lat, lng, dateStr, outOfRange);
+                return outOfRange;
             }
 
             throw new Error("API 回應失敗");
@@ -1046,7 +1103,7 @@ async function fetchWeatherData(lat, lng, dateStr) {
 
         const meta = getWeatherMeta(weatherCode);
 
-        return {
+        const weatherData = {
             // 🌅 日出日落
             sunrise: json.daily.sunrise[0]?.split('T')[1] || "--",
             sunset: json.daily.sunset[0]?.split('T')[1] || "--",
@@ -1061,10 +1118,12 @@ async function fetchWeatherData(lat, lng, dateStr) {
             tempPM: hourly[13] != null ? Math.round(hourly[13]) + "°C" : "--",
             tempNight: hourly[20] != null ? Math.round(hourly[20]) + "°C" : "--",
         };
+        setCachedWeather(lat, lng, dateStr, weatherData);
+        return weatherData;
 
     } catch (e) {
         console.error("天氣抓取錯誤:", e);
-        return null;
+        return getCachedWeather(lat, lng, dateStr);
     }
 }
 
