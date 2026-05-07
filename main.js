@@ -70,6 +70,24 @@ document.addEventListener('DOMContentLoaded', function() {
             window.toggleDarkMode();
         });
     }
+    
+    // 添加 hamburger menu 事件監聽器
+    const hamburgerBtn = document.getElementById('hamburger-menu');
+    const hamburgerDropdown = document.getElementById('hamburger-dropdown');
+    
+    if (hamburgerBtn && hamburgerDropdown) {
+        hamburgerBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            hamburgerDropdown.classList.toggle('show');
+        });
+        
+        // 點擊其他地方關閉選單
+        document.addEventListener('click', function(e) {
+            if (!hamburgerBtn.contains(e.target) && !hamburgerDropdown.contains(e.target)) {
+                hamburgerDropdown.classList.remove('show');
+            }
+        });
+    }
 });
 
 // --- 完整管理員權限控制邏輯 ---
@@ -85,13 +103,15 @@ getRedirectResult(auth).then((result) => {
 
 onAuthStateChanged(auth, (user) => {
     // 1. 設定你的專屬 UID
-    const adminUID = "eECs2vvipQM0QZTP8UpTUk5Lq7o2"; 
+    const adminUID = "eECs2vvipQM0QZTP8UpTUk5Lq7o2";
     
     // 2. 獲取頁面上的 UI 元素
+    const adminBar = document.getElementById('admin-bar');
     const statusText = document.getElementById('auth-status');
     const loginBtn = document.getElementById('login-trigger-btn');
     const resetBtn = document.getElementById('reset-data-btn');
     const modal = document.getElementById('login-modal');
+    const hamburgerDropdown = document.getElementById('hamburger-dropdown');
 
     // 3. 判斷是否為管理員本人
     const isAdmin = user && user.uid === adminUID;
@@ -100,8 +120,21 @@ onAuthStateChanged(auth, (user) => {
         // --- 情況 A: 管理員本人登入成功 ---
         console.log("✅ 管理員身份已確認 (UID 匹配)");
         
+        // 顯示 admin bar
+        if (adminBar) adminBar.style.display = 'flex';
+        
         if (statusText) statusText.innerText = `管理員模式：${user.displayName || '已開啟'}`;
         if (loginBtn) loginBtn.innerText = "登出管理員";
+        
+        // 更新 hamburger menu
+        if (hamburgerDropdown) {
+            hamburgerDropdown.innerHTML = `
+                <button class="hamburger-dropdown-item" onclick="signOut(auth).then(() => location.reload())">登出管理員</button>
+                <div style="padding: 8px 16px; font-size: 12px; color: var(--text-secondary); border-top: 1px solid var(--border-color);">
+                    管理員模式：${user.displayName || '已開啟'}
+                </div>
+            `;
+        }
         
         // --- 新增：插入匯出匯入按鈕到頂部 Admin Bar ---
         // 檢查是否已經加過按鈕，避免重複產生
@@ -132,6 +165,10 @@ onAuthStateChanged(auth, (user) => {
     } else {
         // --- 情況 C: 訪客模式 ---
         console.log("ℹ️ 訪客模式");
+        
+        // 隱藏 admin bar
+        if (adminBar) adminBar.style.display = 'none';
+        
         if (statusText) {
             statusText.innerText = "訪客模式 (唯讀)";
             // 登出時移除按鈕
@@ -140,6 +177,16 @@ onAuthStateChanged(auth, (user) => {
         }
         if (loginBtn) loginBtn.innerText = "管理員登入";
         if (resetBtn) resetBtn.style.display = "none";
+        
+        // 更新 hamburger menu
+        if (hamburgerDropdown) {
+            hamburgerDropdown.innerHTML = `
+                <button class="hamburger-dropdown-item" onclick="openLoginModal()">管理員登入</button>
+                <div style="padding: 8px 16px; font-size: 12px; color: var(--text-secondary); border-top: 1px solid var(--border-color);">
+                    訪客模式 (唯讀)
+                </div>
+            `;
+        }
     }
 
     if (typeof loadDay === 'function') {

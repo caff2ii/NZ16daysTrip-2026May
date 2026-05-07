@@ -10,17 +10,26 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="admin-bar" style="padding: 5px 15px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; gap: 10px;">
+    <div id="admin-bar" style="padding: 5px 15px; font-size: 12px; display: none; justify-content: space-between; align-items: center; flex-shrink: 0; gap: 10px;">
         <span id="auth-status">訪客模式 (唯讀)</span>
         <div style="display: flex; gap: 5px; align-items: center;">
-            <button id="dark-mode-toggle" class="dark-mode-toggle" title="切換深色模式">🌙</button>
             <button id="login-trigger-btn" onclick="openLoginModal()">管理員登入</button>
         </div>
     </div>
     <div id="top-bar">
         <div class="header">
-            <h1>紐西蘭南島 16天自駕遊 Kia Carnival</h1>
-            <p>2026/05/10 - 05/25 | 雲端同步版</p>
+            <button id="hamburger-menu" class="hamburger-menu" title="選單">☰</button>
+            <div class="title-section">
+                <h1>紐西蘭南島16天自駕遊</h1>
+                <p>Version 104</p>
+            </div>
+            <button id="dark-mode-toggle" class="dark-mode-toggle" title="切換深色模式">🌙</button>
+            <div id="hamburger-dropdown" class="hamburger-dropdown">
+                <button class="hamburger-dropdown-item" onclick="openLoginModal()">管理員登入</button>
+                <div style="padding: 8px 16px; font-size: 12px; color: var(--text-secondary); border-top: 1px solid var(--border-color);">
+                    訪客模式 (唯讀)
+                </div>
+            </div>
         </div>
         <div class="nav-buttons" id="nav-container"></div>
     </div>
