@@ -1249,62 +1249,36 @@ window.showWeatherOverview = async function(options = {}) {
 
         if (!weather || weather.isOutOfRange) {
             return `
-                <div style="
-                    flex:1;
-                    background: var(--bg-input);
-                    border-radius: 12px;
-                    padding: 12px;
-                    text-align: center;
-                    color: var(--text-secondary);
-                    border: 1px solid var(--border-light);
-                    min-width: 0;
-                ">
-                    <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${locName}">
-                        ${locName}
+                <div class="weather-overview-card" style="border-top-color: ${style.border};">
+                    <div class="weather-small-main">
+                        <div class="weather-small-icon">?</div>
+                        <div class="weather-small-copy">
+                            <div class="weather-small-title" title="${locName}">${locName}</div>
+                            <div class="weather-small-desc">暫無資料</div>
+                        </div>
                     </div>
-                    <div style="font-size: 12px;">❓ 暫無資料</div>
+                    <div class="weather-small-empty">資料載入失敗</div>
                 </div>
             `;
         }
 
-        const textColor = weather?.type === "storm" ? (isDarkMode ? "#e0e0e0" : "#fff") : (isDarkMode ? "#e0e0e0" : "#111");
-        const boxBg = weather?.type === "storm"
-            ? (isDarkMode ? "rgba(100,100,100,0.2)" : "rgba(255,255,255,0.1)")
-            : (isDarkMode ? "rgba(100,100,100,0.2)" : "rgba(255,255,255,0.4)");
-
         return `
-            <div style="
-                flex: 1;
-                background: ${style.bg};
-                border-radius: 12px;
-                padding: 12px;
-                text-align: center;
-                color: ${textColor};
-                border: 1px solid ${style.border};
-                min-width: 0;
-            ">
-                <div style="font-size: 13px; font-weight: 700; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${locName}">
-                    ${locName}
-                </div>
-                <div style="font-size: 22px; margin-bottom: 6px;">
-                    ${weather.icon}
-                </div>
-                <div style="font-size: 11px; font-weight: 600; margin-bottom: 8px; opacity: 0.9;">
-                    ${weather.weather}
-                </div>
-                <div style="display: flex; gap: 4px; font-size: 10px;">
-                    <div style="flex: 1; background: ${boxBg}; border-radius: 8px; padding: 3px;">
-                        <div style="opacity: 0.7;">早</div>
-                        <div style="font-weight: 700;">${weather.tempAM}</div>
+            <div class="weather-overview-card" style="border-top-color: ${style.border}; background: ${style.bg}; box-shadow: ${style.shadow};">
+                <div class="weather-small-main">
+                    <div class="weather-small-icon">${weather.icon}</div>
+                    <div class="weather-small-copy">
+                        <div class="weather-small-title" title="${locName}">${locName}</div>
+                        <div class="weather-small-desc">${weather.weather}</div>
                     </div>
-                    <div style="flex: 1; background: ${boxBg}; border-radius: 8px; padding: 3px;">
-                        <div style="opacity: 0.7;">午</div>
-                        <div style="font-weight: 700;">${weather.tempPM}</div>
-                    </div>
-                    <div style="flex: 1; background: ${boxBg}; border-radius: 8px; padding: 3px;">
-                        <div style="opacity: 0.7;">晚</div>
-                        <div style="font-weight: 700;">${weather.tempNight}</div>
-                    </div>
+                </div>
+                <div class="weather-small-temps">
+                    <div><span>早</span><strong>${weather.tempAM}</strong></div>
+                    <div><span>午</span><strong>${weather.tempPM}</strong></div>
+                    <div><span>晚</span><strong>${weather.tempNight}</strong></div>
+                </div>
+                <div class="weather-small-sun">
+                    <span>🌅 ${weather.sunrise}</span>
+                    <span>🌇 ${weather.sunset}</span>
                 </div>
             </div>
         `;
@@ -1317,10 +1291,13 @@ window.showWeatherOverview = async function(options = {}) {
         const stayLocName = day.stay || '終點';
 
         return `
-            <div style="background: var(--bg-card); padding: 16px; margin-bottom: 12px; border-radius: 12px; border-left: 4px solid ${day.color};">
-                <div style="font-size: 13px; color: var(--text-tertiary); margin-bottom: 2px; font-weight: 700;">Day ${day.day}</div>
-                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${day.date} - ${day.title}</div>
-                <div style="display: flex; gap: 10px;">
+            <div class="weather-day-card" style="border-left-color: ${day.color};">
+                <div class="weather-day-header">
+                    <div>Day ${day.day}</div>
+                    <div>${day.date}</div>
+                </div>
+                <div class="weather-day-subtitle">${day.title}</div>
+                <div class="weather-overview-compact">
                     ${buildWeatherCardSmall(prevLocName, dayWeather.prev)}
                     ${buildWeatherCardSmall(stayLocName, dayWeather.stay)}
                 </div>
@@ -1335,7 +1312,7 @@ window.showWeatherOverview = async function(options = {}) {
             <div style="font-size:13px; color:var(--text-secondary);">根據各日出發點與目的地的天氣預報。</div>
             <button class="btn-main" style="margin-top:12px; width:100%;" onclick="loadDay(${currentDayIndex})">返回當日行程</button>
         </div>
-        <div style="display: grid; gap: 8px;">
+        <div style="display: grid; gap: 12px;">
             ${dayCards}
         </div>
     `;

@@ -433,16 +433,49 @@ body.map-fullscreen.map-shrunk #map-container {
   gap: 8px;
 }
 
-.weather-compact-card {
+.weather-overview-compact {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.weather-overview-card {
   position: relative;
   min-width: 0;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-top: 3px solid var(--weather-accent, #1abc9c);
   border-radius: 12px;
-  padding: 10px;
+  padding: 12px;
   box-shadow: 0 8px 22px rgba(0,0,0,0.08);
   overflow: hidden;
+  color: var(--text);
+}
+
+.weather-day-card {
+  background: var(--bg-card);
+  border-left: 4px solid #3498db;
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.05);
+}
+
+.weather-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  font-weight: 700;
+}
+
+.weather-day-subtitle {
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-bottom: 10px;
 }
 
 .weather-small-main {
