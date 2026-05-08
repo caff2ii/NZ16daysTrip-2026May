@@ -841,8 +841,6 @@ function renderViewMode() {
         const typeClass =
             normalizedType === 'activity' ? 'activity' :
             (normalizedType === 'hotel' ? 'hotel' : '');
-        const mapQuery = encodeURIComponent(item.text + " New Zealand");
-        const mapUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
 
         // --- 1. 停留時間顯示優化 (自動轉 hr) ---
         let stayHtml = '';
