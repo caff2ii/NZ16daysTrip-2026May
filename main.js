@@ -23,7 +23,9 @@ function buildHamburgerMenuHtml({ isAdmin, displayName }) {
 
     return `
         ${authButton}
-        <button class="hamburger-dropdown-item" onclick="window.showAccommodationOverview()">住宿總覽</button>
+        <button class="hamburger-dropdown-item" onclick="window.showAccommodationOverview()">🏨 住宿總覽</button>
+        <button class="hamburger-dropdown-item" onclick="window.showActivityOverview()">🏔️ 活動總覽</button>
+        <button class="hamburger-dropdown-item" onclick="window.showWeatherOverview()">☁️ 天氣總覽</button>
         <button class="hamburger-dropdown-item" onclick="window.enableOfflineMode()">離線模式</button>
         <button class="hamburger-dropdown-item danger" onclick="window.clearAppCache()">清除快取</button>
         <div class="hamburger-dropdown-status">
@@ -975,6 +977,172 @@ window.showAccommodationOverview = function(options = {}) {
     if (!options.skipMapUpdate) {
         updateMapWithRouting(stayKeys, '#9b59b6');
     }
+
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) sidebar.scrollTo({ top: 0, behavior: 'auto' });
+};
+
+window.showActivityOverview = function(options = {}) {
+    if (isEditingMode) {
+        alert("請先儲存或取消編輯模式");
+        return;
+    }
+
+    currentViewMode = 'activity';
+    const contentDiv = document.getElementById('itinerary-content');
+    const weatherDiv = document.getElementById('weather-display');
+    const hamburgerDropdown = document.getElementById('hamburger-dropdown');
+    if (weatherDiv) weatherDiv.style.display = 'none';
+    if (hamburgerDropdown) hamburgerDropdown.classList.remove('show');
+
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+
+    const activities = [];
+    itineraryData.forEach((day, dayIdx) => {
+        if (!day.schedule) return;
+        day.schedule.forEach((item) => {
+            if (['activity', 'visit', 'food'].includes(item.type)) {
+                activities.push({
+                    ...item,
+                    day: day.day,
+                    date: day.date,
+                    dayTitle: day.title,
+                    dayColor: day.color
+                });
+            }
+        });
+    });
+
+    const cards = activities.map((activity) => {
+        const point = activity.mapKey && coords[activity.mapKey] ? coords[activity.mapKey] : null;
+        const mapUrl = point ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(point[0] + ',' + point[1])}` : '';
+        const mapName = activity.mapKey ? (coordNames[activity.mapKey] || activity.text) : activity.text;
+        const navBtn = point ? `<button class="link-btn nav-btn" type="button" data-nav-lat="${point[0]}" data-nav-lng="${point[1]}" data-nav-label="${mapName.replace(/"/g, '&quot;')}" onclick="window.openNavigationChooser(this.dataset.navLat, this.dataset.navLng, this.dataset.navLabel)">🧭 導航</button>` : '';
+
+        const typeIcon = {
+            'activity': '🧗',
+            'visit': '🏔️',
+            'food': '🍴'
+        }[activity.type] || '📍';
+
+        return `
+            <div class="activity-card" style="background: var(--bg-card); padding: 14px; margin-bottom: 12px; border-radius: 10px; border-left: 4px solid ${activity.dayColor};">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                    <div>
+                        <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 2px;">Day ${activity.day} | ${activity.date}</div>
+                        <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">${typeIcon} ${activity.text}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">${activity.dayTitle}</div>
+                    </div>
+                    <div style="text-align: right; font-size: 13px; font-weight: 700; color: ${activity.dayColor};">${activity.time}</div>
+                </div>
+                ${activity.hours ? `<div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px;">🕒 ${activity.hours}</div>` : ''}
+                ${activity.desc ? `<div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px;">${activity.desc.replace(/\n/g, '<br>')}</div>` : ''}
+                ${point || activity.link ? `<div class="links-row" style="margin-top: 0; border-top: none; padding-top: 0; gap: 8px;">
+                    ${point ? `<a class="link-btn map-view-btn" href="${mapUrl}" target="_blank" rel="noopener">📍 地圖查看</a>` : ''}
+                    ${navBtn}
+                    ${activity.link ? `<a class="link-btn external-link-btn" href="${activity.link}" target="_blank" rel="noopener">🔗 預訂</a>` : ''}
+                </div>` : ''}
+            </div>
+        `;
+    }).join('');
+
+    contentDiv.innerHTML = `
+        <div class="day-header" style="margin-bottom: 16px;">
+            <div style="font-size:12px; color:var(--text-tertiary);">活動總覽</div>
+            <h2 style="margin:5px 0 8px;">全程活動與景點</h2>
+            <div style="font-size:13px; color:var(--text-secondary);">瀏覽所有行程中的景點、活動與用餐地點。</div>
+            <button class="btn-main" style="margin-top:12px; width:100%;" onclick="loadDay(${currentDayIndex})">返回當日行程</button>
+        </div>
+        <div style="display: grid; gap: 8px;">
+            ${cards}
+        </div>
+    `;
+
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) sidebar.scrollTo({ top: 0, behavior: 'auto' });
+};
+
+window.showWeatherOverview = function(options = {}) {
+    if (isEditingMode) {
+        alert("請先儲存或取消編輯模式");
+        return;
+    }
+
+    currentViewMode = 'weather';
+    const contentDiv = document.getElementById('itinerary-content');
+    const weatherDiv = document.getElementById('weather-display');
+    const hamburgerDropdown = document.getElementById('hamburger-dropdown');
+    if (weatherDiv) weatherDiv.style.display = 'none';
+    if (hamburgerDropdown) hamburgerDropdown.classList.remove('show');
+
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+
+    const weatherCards = itineraryData.map((day) => {
+        const stayKey = day.stayMapKey || '';
+        const point = stayKey && coords[stayKey] ? coords[stayKey] : null;
+        
+        if (!point) {
+            return `
+                <div class="weather-card" style="background: var(--bg-card); padding: 14px; margin-bottom: 12px; border-radius: 10px; opacity: 0.6;">
+                    <div style="font-size: 13px; color: var(--text-tertiary);">Day ${day.day} | ${day.date}</div>
+                    <div style="font-weight: 700; margin: 6px 0; color: var(--text-primary);">${day.stay || day.title}</div>
+                    <div style="color: var(--text-secondary);">⚠️ 未設定天氣座標</div>
+                </div>
+            `;
+        }
+
+        const dateParts = (day.date || '').split('/');
+        const travelDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+        const cachedWeather = getCachedWeather(point[0], point[1], travelDate);
+
+        if (cachedWeather) {
+            const w = cachedWeather;
+            const tempRange = w.temperatureMax && w.temperatureMin 
+                ? `${Math.round(w.temperatureMin)}°C ~ ${Math.round(w.temperatureMax)}°C`
+                : '溫度未知';
+            const conditions = w.weatherCodeDescription || w.shortForecast || '無天氣數據';
+
+            return `
+                <div class="weather-card" style="background: var(--bg-card); padding: 14px; margin-bottom: 12px; border-radius: 10px; border-left: 4px solid ${day.color || '#3498db'};">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                        <div>
+                            <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 2px;">Day ${day.day}</div>
+                            <div style="font-weight: 700; color: var(--text-primary);">${day.stay || day.title}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">${day.date}</div>
+                        </div>
+                        <div style="text-align: right; font-size: 24px;">🌡️</div>
+                    </div>
+                    <div style="background: rgba(52,152,219,0.1); padding: 8px 10px; border-radius: 6px; margin: 8px 0;">
+                        <div style="font-size: 13px; font-weight: 700; color: #2479b5;">溫度: ${tempRange}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">狀況: ${conditions}</div>
+                        ${w.humidity ? `<div style="font-size: 12px; color: var(--text-secondary);">濕度: ${w.humidity}%</div>` : ''}
+                        ${w.windSpeed ? `<div style="font-size: 12px; color: var(--text-secondary);">風速: ${Math.round(w.windSpeed)} km/h</div>` : ''}
+                    </div>
+                    ${w.detailedForecast ? `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-top: 8px;">${w.detailedForecast}</div>` : ''}
+                </div>
+            `;
+        } else {
+            return `
+                <div class="weather-card" style="background: var(--bg-card); padding: 14px; margin-bottom: 12px; border-radius: 10px;">
+                    <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 2px;">Day ${day.day}</div>
+                    <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">${day.stay || day.title}</div>
+                    <div style="font-size: 13px; color: var(--text-secondary);">⏳ 天氣數據正在載入...</div>
+                </div>
+            `;
+        }
+    }).join('');
+
+    contentDiv.innerHTML = `
+        <div class="day-header" style="margin-bottom: 16px;">
+            <div style="font-size:12px; color:var(--text-tertiary);">天氣總覽</div>
+            <h2 style="margin:5px 0 8px;">全程天氣預報</h2>
+            <div style="font-size:13px; color:var(--text-secondary);">根據各宿點位置的天氣預報。</div>
+            <button class="btn-main" style="margin-top:12px; width:100%;" onclick="loadDay(${currentDayIndex})">返回當日行程</button>
+        </div>
+        <div style="display: grid; gap: 8px;">
+            ${weatherCards}
+        </div>
+    `;
 
     const sidebar = document.getElementById('sidebar');
     if (sidebar) sidebar.scrollTo({ top: 0, behavior: 'auto' });
