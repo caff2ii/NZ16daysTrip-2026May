@@ -1208,9 +1208,33 @@ input[type="number"]::-webkit-outer-spin-button { opacity: 1; height: 24px; }
 
   #weather-display .weather-compact {
     display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
     background: var(--bg-primary);
     padding: 10px 0 8px;
     border-bottom: 1px solid var(--border-color);
+  }
+
+  #weather-display .weather-compact-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-top: 1px solid var(--border-color);
+    border-left: 3px solid var(--weather-accent, #1abc9c);
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: var(--bg-card);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+  }
+
+  #weather-display .weather-compact .weather-small-main {
+    flex: 1;
+    min-width: 0;
+    margin-bottom: 0;
+  }
+
+  #weather-display .weather-compact .weather-small-sun {
+    display: none;
   }
 
   body.map-shrunk #weather-display .weather-compact {

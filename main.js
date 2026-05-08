@@ -840,7 +840,7 @@ function renderViewMode() {
         ``;
     
     const stayLinkBtn = data.stayLink ? 
-        `<a href="${data.stayLink}" target="_blank" style="text-decoration:none; font-size:12px; background:#e67e22; color:white; padding:4px 10px; border-radius:6px; margin-left:10px; font-weight:bold;">🔗 查看預訂</a>` : '';
+        `<a href="${data.stayLink}" target="_blank" style="text-decoration:none; font-size:12px; background:#e67e22; color:white; padding:4px 10px; border-radius:6px; margin-left:10px; font-weight:bold;">🔗 相關連結</a>` : '';
 
     let html = `
         <div class="day-header">
@@ -916,7 +916,7 @@ function renderViewMode() {
                 <div class="links-row" style="margin-top: 12px; border-top: 1px dashed ${isDarkMode ? '#444' : '#eee'}; padding-top: 8px;">
                     ${point ? `<a class="link-btn map-view-btn" href="${mapUrl}" target="_blank" rel="noopener">📍 地圖查看</a>` : `<span>未設定地圖座標</span>`}
                     ${navButton}
-                    ${item.link ? `<a class="link-btn external-link-btn" href="${item.link}" target="_blank" rel="noopener">🔗 相關連結 / 預訂</a>` : ''}
+                    ${item.link ? `<a class="link-btn external-link-btn" href="${item.link}" target="_blank" rel="noopener">🔗 相關連結</a>` : ''}
                 </div>
             </div>
         `;
@@ -976,7 +976,7 @@ window.showAccommodationOverview = function(options = {}) {
                 <div class="accommodation-meta">Day ${day.day}: ${day.title || ''}</div>
                 <div class="accommodation-actions">
                     ${hasMapPoint ? `<a class="link-btn map-view-btn" href="${mapUrl}" target="_blank" rel="noopener">📍 地圖查看</a>${navBtn}` : `<span>未設定地圖座標</span>`}
-                    ${day.stayLink ? `<a class="link-btn external-link-btn" href="${day.stayLink}" target="_blank" rel="noopener">🔗 查看預訂</a>` : ''}
+                    ${day.stayLink ? `<a class="link-btn external-link-btn" href="${day.stayLink}" target="_blank" rel="noopener">🔗 相關連結</a>` : ''}
                 </div>
             </div>
         `;
@@ -1062,7 +1062,7 @@ window.showScheduleOverview = function(options = {}) {
                 ${point || item.link ? `<div class="links-row" style="margin-top: 0; border-top: none; padding-top: 0; gap: 8px;">
                     ${point ? `<a class="link-btn map-view-btn" href="${mapUrl}" target="_blank" rel="noopener">📍 地圖查看</a>` : ''}
                     ${navBtn}
-                    ${item.link ? `<a class="link-btn external-link-btn" href="${item.link}" target="_blank" rel="noopener">🔗 預訂</a>` : ''}
+                    ${item.link ? `<a class="link-btn external-link-btn" href="${item.link}" target="_blank" rel="noopener">🔗 相關連結</a>` : ''}
                 </div>` : ''}
             </div>
         `;
@@ -1149,7 +1149,7 @@ window.showActivityOverview = function(options = {}) {
                     ${point || activity.link ? `<div class="links-row" style="margin-top: 0; border-top: none; padding-top: 0; gap: 8px;">
                         ${point ? `<a class="link-btn map-view-btn" href="${mapUrl}" target="_blank" rel="noopener">📍 地圖查看</a>` : ''}
                         ${navBtn}
-                        ${activity.link ? `<a class="link-btn external-link-btn" href="${activity.link}" target="_blank" rel="noopener">🔗 預訂</a>` : ''}
+                        ${activity.link ? `<a class="link-btn external-link-btn" href="${activity.link}" target="_blank" rel="noopener">🔗 相關連結</a>` : ''}
                     </div>` : ''}
                 </div>
             `;
