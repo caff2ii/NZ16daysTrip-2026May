@@ -862,6 +862,12 @@ function renderViewMode() {
         const hasMapPoint = item.mapKey && coords[item.mapKey];
         const mapKeyAttrs = hasMapPoint ? ` data-map-key="${item.mapKey}" role="button" tabindex="0" title="在地圖查看此地點"` : '';
         const mapFocusClass = hasMapPoint ? ' has-map-point' : '';
+        const point = hasMapPoint ? coords[item.mapKey] : null;
+        const pointLat = point ? point[0] : null;
+        const pointLng = point ? point[1] : null;
+        const mapLabel = point ? (coordNames[item.mapKey] || item.text || item.mapKey) : '';
+        const mapUrl = point ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pointLat + ',' + pointLng)}` : '';
+        const navButton = point ? `<button class="link-btn nav-btn" type="button" onclick="window.openNavigationChooser(${pointLat}, ${pointLng}, ${JSON.stringify(mapLabel)})">🧭 導航</button>` : '';
         html += `
             <div class="timeline-item ${typeClass}${mapFocusClass}"${mapKeyAttrs}>
                 <div class="item-header" style="display: flex; align-items: center; justify-content: space-between;">
@@ -887,14 +893,9 @@ function renderViewMode() {
                 </div>
     
                 <div class="links-row" style="margin-top: 12px; border-top: 1px dashed ${isDarkMode ? '#444' : '#eee'}; padding-top: 8px;">
-                    <a href="${mapUrl}" target="_blank" style="text-decoration: none; color: ${isDarkMode ? '#64b5f6' : '#3498db'}; font-size: 12px; display: flex; align-items: center; gap: 4px;">
-                        📍 在 Google Map 查看
-                    </a>
-                    ${item.link ? `
-                        <a href="${item.link}" target="_blank" style="text-decoration: none; color: ${isDarkMode ? '#ff9500' : '#e67e22'}; font-size: 12px; display: flex; align-items: center; gap: 4px; border-left: 1px solid ${isDarkMode ? '#444' : '#ddd'}; padding-left: 15px;">
-                            🔗 相關連結 / 預訂
-                        </a>
-                    ` : ''}
+                    ${point ? `<a class="link-btn map-view-btn" href="${mapUrl}" target="_blank" rel="noopener">📍 地圖查看</a>` : `<span>未設定地圖座標</span>`}
+                    ${navButton}
+                    ${item.link ? `<a class="link-btn external-link-btn" href="${item.link}" target="_blank" rel="noopener">🔗 相關連結 / 預訂</a>` : ''}
                 </div>
             </div>
         `;
@@ -938,9 +939,11 @@ window.showAccommodationOverview = function(options = {}) {
         const mapClass = hasMapPoint ? ' has-map-point' : '';
         const dateText = day.date || `Day ${day.day}`;
         const mapName = coordNames[stayKey] || stayKey;
-        const mapUrl = hasMapPoint
-            ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapName + ' New Zealand')}`
+        const point = hasMapPoint ? coords[stayKey] : null;
+        const mapUrl = point
+            ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(point[0] + ',' + point[1])}`
             : '';
+        const navBtn = point ? `<button class="link-btn nav-btn" type="button" onclick="window.openNavigationChooser(${point[0]}, ${point[1]}, ${JSON.stringify(mapName)})">🧭 導航</button>` : '';
 
         return `
             <div class="accommodation-card${mapClass}"${mapAttrs}>
@@ -951,8 +954,8 @@ window.showAccommodationOverview = function(options = {}) {
                 <div class="accommodation-title">${day.stay || '未設定住宿'}</div>
                 <div class="accommodation-meta">Day ${day.day}: ${day.title || ''}</div>
                 <div class="accommodation-actions">
-                    ${hasMapPoint ? `<a href="${mapUrl}" target="_blank">在 Google Map 查看</a>` : `<span>未設定地圖座標</span>`}
-                    ${day.stayLink ? `<a href="${day.stayLink}" target="_blank">查看預訂</a>` : ''}
+                    ${hasMapPoint ? `<a class="link-btn map-view-btn" href="${mapUrl}" target="_blank" rel="noopener">📍 地圖查看</a>${navBtn}` : `<span>未設定地圖座標</span>`}
+                    ${day.stayLink ? `<a class="link-btn external-link-btn" href="${day.stayLink}" target="_blank" rel="noopener">🔗 查看預訂</a>` : ''}
                 </div>
             </div>
         `;
@@ -1049,6 +1052,33 @@ window.focusMapPoint = function(mapKey, sourceCard) {
                 setTimeout(() => marker.openPopup(), 450);
             }
         }, wasShrunk ? 320 : 0);
+    });
+};
+
+window.openNavigationChooser = function(lat, lng, label = '') {
+    const title = label ? `導航至：${label}` : '導航';
+    const sheet = document.createElement('div');
+    sheet.className = 'nav-sheet-overlay';
+    sheet.innerHTML = `
+        <div class="nav-sheet">
+            <div class="nav-sheet-header">
+                <div>
+                    <div class="nav-sheet-title">${title}</div>
+                    <div class="nav-sheet-subtitle">選擇導航應用程式</div>
+                </div>
+                <button type="button" class="nav-sheet-close" aria-label="關閉">×</button>
+            </div>
+            <div class="nav-sheet-body">
+                <a class="nav-sheet-option" href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" rel="noopener">Google Maps</a>
+                <a class="nav-sheet-option" href="https://maps.apple.com/?daddr=${lat},${lng}" target="_blank" rel="noopener">Apple 地圖</a>
+                <a class="nav-sheet-option" href="https://www.waze.com/ul?ll=${lat},${lng}&navigate=yes" target="_blank" rel="noopener">Waze</a>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(sheet);
+    sheet.querySelector('.nav-sheet-close').addEventListener('click', () => sheet.remove());
+    sheet.addEventListener('click', (event) => {
+        if (event.target === sheet) sheet.remove();
     });
 };
 
