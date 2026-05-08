@@ -433,58 +433,16 @@ body.map-fullscreen.map-shrunk #map-container {
   gap: 8px;
 }
 
-.weather-overview-compact {
-  display: grid;
-  width: 100%;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.weather-overview-card {
+.weather-compact-card {
   position: relative;
   min-width: 0;
   background: var(--bg-card);
-  border: 1px solid rgba(0,0,0,0.06);
-  border-radius: 18px;
-  padding: 14px 16px 16px;
-  box-shadow: 0 18px 40px rgba(0,0,0,0.08);
+  border: 1px solid var(--border-color);
+  border-top: 3px solid var(--weather-accent, #1abc9c);
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.08);
   overflow: hidden;
-  color: var(--text);
-}
-
-.weather-overview-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 4px;
-  background: var(--weather-accent, #1abc9c);
-}
-
-.weather-day-card {
-  background: var(--bg-card);
-  border-left: 4px solid #3498db;
-  border-radius: 14px;
-  padding: 14px;
-  box-shadow: 0 8px 22px rgba(0,0,0,0.05);
-}
-
-.weather-day-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 6px;
-  font-size: 13px;
-  color: var(--text-tertiary);
-  font-weight: 700;
-}
-
-.weather-day-subtitle {
-  color: var(--text-secondary);
-  font-size: 12px;
-  margin-bottom: 10px;
 }
 
 .weather-small-main {
@@ -1217,111 +1175,9 @@ input[type="number"]::-webkit-outer-spin-button { opacity: 1; height: 24px; }
 
   #weather-display .weather-compact {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    background: transparent;
+    background: var(--bg-primary);
     padding: 10px 0 8px;
     border-bottom: 1px solid var(--border-color);
-  }
-
-  #weather-display .weather-compact-card {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    border: 1px solid rgba(0,0,0,0.06);
-    border-radius: 20px;
-    padding: 14px 16px 16px;
-    background: var(--bg-card);
-    box-shadow: 0 18px 40px rgba(0,0,0,0.08);
-    overflow: hidden;
-    min-height: 190px;
-  }
-
-  #weather-display .weather-compact-card::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: var(--weather-accent, #1abc9c);
-  }
-
-  #weather-display .weather-compact .weather-small-main {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 0;
-    margin-bottom: 0;
-  }
-
-  #weather-display .weather-small-icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 14px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    background: rgba(26,188,156,0.12);
-    font-size: 18px;
-  }
-
-  #weather-display .weather-small-title {
-    font-size: 14px;
-  }
-
-  #weather-display .weather-small-desc {
-    margin-top: 4px;
-    font-size: 12px;
-    color: var(--text-secondary);
-    line-height: 1.4;
-    white-space: normal;
-  }
-
-  #weather-display .weather-small-temps {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-    font-size: 11px;
-    color: var(--text-primary);
-  }
-
-  #weather-display .weather-small-temps div {
-    min-height: 54px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    border-radius: 14px;
-    padding: 10px 6px;
-    background: rgba(255,255,255,0.8);
-    color: var(--text-primary);
-  }
-
-  #weather-display .weather-small-temps span {
-    display: block;
-    margin-bottom: 4px;
-    opacity: 0.75;
-  }
-
-  #weather-display .weather-small-temps strong {
-    font-size: 15px;
-  }
-
-  #weather-display .weather-small-sun {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    margin-top: 2px;
-    font-size: 11px;
-    color: var(--text-secondary);
-  }
-
-  body.map-shrunk #weather-display .weather-compact {
-    gap: 6px;
-    padding: 5px 0;
   }
 
   body.map-shrunk #weather-display .weather-compact {

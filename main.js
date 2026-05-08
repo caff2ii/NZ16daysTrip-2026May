@@ -840,7 +840,7 @@ function renderViewMode() {
         ``;
     
     const stayLinkBtn = data.stayLink ? 
-        `<a href="${data.stayLink}" target="_blank" style="text-decoration:none; font-size:12px; background:#e67e22; color:white; padding:4px 10px; border-radius:6px; margin-left:10px; font-weight:bold;">🔗 相關連結</a>` : '';
+        `<a href="${data.stayLink}" target="_blank" style="text-decoration:none; font-size:12px; background:#e67e22; color:white; padding:4px 10px; border-radius:6px; margin-left:10px; font-weight:bold;">🔗 查看預訂</a>` : '';
 
     let html = `
         <div class="day-header">
@@ -916,7 +916,7 @@ function renderViewMode() {
                 <div class="links-row" style="margin-top: 12px; border-top: 1px dashed ${isDarkMode ? '#444' : '#eee'}; padding-top: 8px;">
                     ${point ? `<a class="link-btn map-view-btn" href="${mapUrl}" target="_blank" rel="noopener">📍 地圖查看</a>` : `<span>未設定地圖座標</span>`}
                     ${navButton}
-                    ${item.link ? `<a class="link-btn external-link-btn" href="${item.link}" target="_blank" rel="noopener">🔗 相關連結</a>` : ''}
+                    ${item.link ? `<a class="link-btn external-link-btn" href="${item.link}" target="_blank" rel="noopener">🔗 相關連結 / 預訂</a>` : ''}
                 </div>
             </div>
         `;
@@ -976,7 +976,7 @@ window.showAccommodationOverview = function(options = {}) {
                 <div class="accommodation-meta">Day ${day.day}: ${day.title || ''}</div>
                 <div class="accommodation-actions">
                     ${hasMapPoint ? `<a class="link-btn map-view-btn" href="${mapUrl}" target="_blank" rel="noopener">📍 地圖查看</a>${navBtn}` : `<span>未設定地圖座標</span>`}
-                    ${day.stayLink ? `<a class="link-btn external-link-btn" href="${day.stayLink}" target="_blank" rel="noopener">🔗 相關連結</a>` : ''}
+                    ${day.stayLink ? `<a class="link-btn external-link-btn" href="${day.stayLink}" target="_blank" rel="noopener">🔗 查看預訂</a>` : ''}
                 </div>
             </div>
         `;
@@ -1062,7 +1062,7 @@ window.showScheduleOverview = function(options = {}) {
                 ${point || item.link ? `<div class="links-row" style="margin-top: 0; border-top: none; padding-top: 0; gap: 8px;">
                     ${point ? `<a class="link-btn map-view-btn" href="${mapUrl}" target="_blank" rel="noopener">📍 地圖查看</a>` : ''}
                     ${navBtn}
-                    ${item.link ? `<a class="link-btn external-link-btn" href="${item.link}" target="_blank" rel="noopener">🔗 相關連結</a>` : ''}
+                    ${item.link ? `<a class="link-btn external-link-btn" href="${item.link}" target="_blank" rel="noopener">🔗 預訂</a>` : ''}
                 </div>` : ''}
             </div>
         `;
@@ -1149,7 +1149,7 @@ window.showActivityOverview = function(options = {}) {
                     ${point || activity.link ? `<div class="links-row" style="margin-top: 0; border-top: none; padding-top: 0; gap: 8px;">
                         ${point ? `<a class="link-btn map-view-btn" href="${mapUrl}" target="_blank" rel="noopener">📍 地圖查看</a>` : ''}
                         ${navBtn}
-                        ${activity.link ? `<a class="link-btn external-link-btn" href="${activity.link}" target="_blank" rel="noopener">🔗 相關連結</a>` : ''}
+                        ${activity.link ? `<a class="link-btn external-link-btn" href="${activity.link}" target="_blank" rel="noopener">🔗 預訂</a>` : ''}
                     </div>` : ''}
                 </div>
             `;
@@ -1242,65 +1242,87 @@ window.showWeatherOverview = async function(options = {}) {
         await Promise.all(weatherFetchJobs);
     }
 
-    // 建立compact天氣卡片
-    const buildCompactCard = (name, weather) => {
+    // 建立天氣卡片的輔助函數
+    const buildWeatherCardSmall = (locName, weather) => {
         const style = getWeatherStyle(weather?.type);
-        const currentHour = new Date().getHours();
-        const tempSlot = currentHour < 12
-            ? 'am'
-            : (currentHour < 18 ? 'pm' : 'night');
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+
         if (!weather || weather.isOutOfRange) {
             return `
-                <div class="weather-compact-card" style="--weather-accent:${style.border};">
-                    <div class="weather-small-main">
-                        <div class="weather-small-icon">?</div>
-                        <div class="weather-small-copy">
-                            <div class="weather-small-title">${name || '未知'}</div>
-                            <div class="weather-small-desc">? 暫無資料</div>
-                        </div>
+                <div style="
+                    flex:1;
+                    background: var(--bg-input);
+                    border-radius: 12px;
+                    padding: 12px;
+                    text-align: center;
+                    color: var(--text-secondary);
+                    border: 1px solid var(--border-light);
+                    min-width: 0;
+                ">
+                    <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${locName}">
+                        ${locName}
                     </div>
-                    <div class="weather-small-temps weather-small-empty">--</div>
+                    <div style="font-size: 12px;">❓ 暫無資料</div>
                 </div>
             `;
         }
 
+        const textColor = weather?.type === "storm" ? (isDarkMode ? "#e0e0e0" : "#fff") : (isDarkMode ? "#e0e0e0" : "#111");
+        const boxBg = weather?.type === "storm"
+            ? (isDarkMode ? "rgba(100,100,100,0.2)" : "rgba(255,255,255,0.1)")
+            : (isDarkMode ? "rgba(100,100,100,0.2)" : "rgba(255,255,255,0.4)");
+
         return `
-            <div class="weather-compact-card" style="--weather-accent:${style.border};">
-                <div class="weather-small-main">
-                    <div class="weather-small-icon">${weather.icon}</div>
-                    <div class="weather-small-copy">
-                        <div class="weather-small-title" title="${name}">${name}</div>
-                        <div class="weather-small-desc">${weather.weather}</div>
+            <div style="
+                flex: 1;
+                background: ${style.bg};
+                border-radius: 12px;
+                padding: 12px;
+                text-align: center;
+                color: ${textColor};
+                border: 1px solid ${style.border};
+                min-width: 0;
+            ">
+                <div style="font-size: 13px; font-weight: 700; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${locName}">
+                    ${locName}
+                </div>
+                <div style="font-size: 22px; margin-bottom: 6px;">
+                    ${weather.icon}
+                </div>
+                <div style="font-size: 11px; font-weight: 600; margin-bottom: 8px; opacity: 0.9;">
+                    ${weather.weather}
+                </div>
+                <div style="display: flex; gap: 4px; font-size: 10px;">
+                    <div style="flex: 1; background: ${boxBg}; border-radius: 8px; padding: 3px;">
+                        <div style="opacity: 0.7;">早</div>
+                        <div style="font-weight: 700;">${weather.tempAM}</div>
                     </div>
-                </div>
-                <div class="weather-small-temps">
-                    <div class="weather-temp-chip ${tempSlot === 'am' ? 'is-current' : ''}"><span>早</span><strong>${weather.tempAM}</strong></div>
-                    <div class="weather-temp-chip ${tempSlot === 'pm' ? 'is-current' : ''}"><span>午</span><strong>${weather.tempPM}</strong></div>
-                    <div class="weather-temp-chip ${tempSlot === 'night' ? 'is-current' : ''}"><span>晚</span><strong>${weather.tempNight}</strong></div>
-                </div>
-                <div class="weather-small-sun">
-                    <span>🌅 ${weather.sunrise}</span>
-                    <span>🌇 ${weather.sunset}</span>
+                    <div style="flex: 1; background: ${boxBg}; border-radius: 8px; padding: 3px;">
+                        <div style="opacity: 0.7;">午</div>
+                        <div style="font-weight: 700;">${weather.tempPM}</div>
+                    </div>
+                    <div style="flex: 1; background: ${boxBg}; border-radius: 8px; padding: 3px;">
+                        <div style="opacity: 0.7;">晚</div>
+                        <div style="font-weight: 700;">${weather.tempNight}</div>
+                    </div>
                 </div>
             </div>
         `;
     };
 
-    // 建立每日compact卡片
+    // 建立每日卡片
     const dayCards = itineraryData.map((day) => {
         const dayWeather = weatherCache[day.day] || {};
         const prevLocName = day.prevStay || '起點';
         const stayLocName = day.stay || '終點';
+
         return `
-            <div class="weather-day-card" style="border-left-color: ${day.color};">
-                <div class="weather-day-header">
-                    <div>Day ${day.day}</div>
-                    <div>${day.date}</div>
-                </div>
-                <div class="weather-day-subtitle">${day.title}</div>
-                <div class="weather-overview-compact">
-                    ${buildCompactCard(prevLocName, dayWeather.prev)}
-                    ${buildCompactCard(stayLocName, dayWeather.stay)}
+            <div style="background: var(--bg-card); padding: 16px; margin-bottom: 12px; border-radius: 12px; border-left: 4px solid ${day.color};">
+                <div style="font-size: 13px; color: var(--text-tertiary); margin-bottom: 2px; font-weight: 700;">Day ${day.day}</div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${day.date} - ${day.title}</div>
+                <div style="display: flex; gap: 10px;">
+                    ${buildWeatherCardSmall(prevLocName, dayWeather.prev)}
+                    ${buildWeatherCardSmall(stayLocName, dayWeather.stay)}
                 </div>
             </div>
         `;
@@ -1313,7 +1335,7 @@ window.showWeatherOverview = async function(options = {}) {
             <div style="font-size:13px; color:var(--text-secondary);">根據各日出發點與目的地的天氣預報。</div>
             <button class="btn-main" style="margin-top:12px; width:100%;" onclick="loadDay(${currentDayIndex})">返回當日行程</button>
         </div>
-        <div style="display: grid; gap: 12px;">
+        <div style="display: grid; gap: 8px;">
             ${dayCards}
         </div>
     `;
@@ -1832,6 +1854,19 @@ async function updateWeatherInfo(data) {
     };
 
     weatherDiv.innerHTML = `
+        <div class="weather-full">
+            <div style="
+                display:flex;
+                gap:15px;
+                width:100%;
+                box-sizing:border-box;
+                margin:15px 0;
+                padding:5px;
+            ">
+                ${buildWeatherCard(data.prevStay, prevWeather)}
+                ${buildWeatherCard(data.stay, stayWeather)}
+            </div>
+        </div>
         <div class="weather-compact">
             ${buildCompactCard(data.prevStay, prevWeather)}
             ${buildCompactCard(data.stay, stayWeather)}
