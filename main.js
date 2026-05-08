@@ -1242,39 +1242,41 @@ window.showWeatherOverview = async function(options = {}) {
         await Promise.all(weatherFetchJobs);
     }
 
-    // 建立天氣卡片的輔助函數
-    const buildWeatherCardSmall = (locName, weather) => {
+    // 建立compact天氣卡片
+    const buildCompactCard = (name, weather) => {
         const style = getWeatherStyle(weather?.type);
-        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-
+        const currentHour = new Date().getHours();
+        const tempSlot = currentHour < 12
+            ? 'am'
+            : (currentHour < 18 ? 'pm' : 'night');
         if (!weather || weather.isOutOfRange) {
             return `
-                <div class="weather-overview-card" style="border-top-color: ${style.border};">
+                <div class="weather-compact-card" style="--weather-accent:${style.border};">
                     <div class="weather-small-main">
                         <div class="weather-small-icon">?</div>
                         <div class="weather-small-copy">
-                            <div class="weather-small-title" title="${locName}">${locName}</div>
-                            <div class="weather-small-desc">暫無資料</div>
+                            <div class="weather-small-title">${name || '未知'}</div>
+                            <div class="weather-small-desc">? 暫無資料</div>
                         </div>
                     </div>
-                    <div class="weather-small-empty">資料載入失敗</div>
+                    <div class="weather-small-temps weather-small-empty">--</div>
                 </div>
             `;
         }
 
         return `
-            <div class="weather-overview-card" style="border-top-color: ${style.border}; background: ${style.bg}; box-shadow: ${style.shadow};">
+            <div class="weather-compact-card" style="--weather-accent:${style.border};">
                 <div class="weather-small-main">
                     <div class="weather-small-icon">${weather.icon}</div>
                     <div class="weather-small-copy">
-                        <div class="weather-small-title" title="${locName}">${locName}</div>
+                        <div class="weather-small-title" title="${name}">${name}</div>
                         <div class="weather-small-desc">${weather.weather}</div>
                     </div>
                 </div>
                 <div class="weather-small-temps">
-                    <div><span>早</span><strong>${weather.tempAM}</strong></div>
-                    <div><span>午</span><strong>${weather.tempPM}</strong></div>
-                    <div><span>晚</span><strong>${weather.tempNight}</strong></div>
+                    <div class="weather-temp-chip ${tempSlot === 'am' ? 'is-current' : ''}"><span>早</span><strong>${weather.tempAM}</strong></div>
+                    <div class="weather-temp-chip ${tempSlot === 'pm' ? 'is-current' : ''}"><span>午</span><strong>${weather.tempPM}</strong></div>
+                    <div class="weather-temp-chip ${tempSlot === 'night' ? 'is-current' : ''}"><span>晚</span><strong>${weather.tempNight}</strong></div>
                 </div>
                 <div class="weather-small-sun">
                     <span>🌅 ${weather.sunrise}</span>
@@ -1284,12 +1286,11 @@ window.showWeatherOverview = async function(options = {}) {
         `;
     };
 
-    // 建立每日卡片
+    // 建立每日compact卡片
     const dayCards = itineraryData.map((day) => {
         const dayWeather = weatherCache[day.day] || {};
         const prevLocName = day.prevStay || '起點';
         const stayLocName = day.stay || '終點';
-
         return `
             <div class="weather-day-card" style="border-left-color: ${day.color};">
                 <div class="weather-day-header">
@@ -1298,8 +1299,8 @@ window.showWeatherOverview = async function(options = {}) {
                 </div>
                 <div class="weather-day-subtitle">${day.title}</div>
                 <div class="weather-overview-compact">
-                    ${buildWeatherCardSmall(prevLocName, dayWeather.prev)}
-                    ${buildWeatherCardSmall(stayLocName, dayWeather.stay)}
+                    ${buildCompactCard(prevLocName, dayWeather.prev)}
+                    ${buildCompactCard(stayLocName, dayWeather.stay)}
                 </div>
             </div>
         `;
@@ -1831,19 +1832,6 @@ async function updateWeatherInfo(data) {
     };
 
     weatherDiv.innerHTML = `
-        <div class="weather-full">
-            <div style="
-                display:flex;
-                gap:15px;
-                width:100%;
-                box-sizing:border-box;
-                margin:15px 0;
-                padding:5px;
-            ">
-                ${buildWeatherCard(data.prevStay, prevWeather)}
-                ${buildWeatherCard(data.stay, stayWeather)}
-            </div>
-        </div>
         <div class="weather-compact">
             ${buildCompactCard(data.prevStay, prevWeather)}
             ${buildCompactCard(data.stay, stayWeather)}

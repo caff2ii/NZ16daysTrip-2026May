@@ -440,7 +440,7 @@ body.map-fullscreen.map-shrunk #map-container {
   gap: 8px;
 }
 
-..weather-overview-card {
+.weather-overview-card {
   position: relative;
   min-width: 0;
   background: var(--bg-card);
