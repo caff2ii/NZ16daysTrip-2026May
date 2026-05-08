@@ -24,7 +24,8 @@ function buildHamburgerMenuHtml({ isAdmin, displayName }) {
     return `
         ${authButton}
         <button class="hamburger-dropdown-item" onclick="window.showAccommodationOverview()">🏨 住宿總覽</button>
-        <button class="hamburger-dropdown-item" onclick="window.showActivityOverview()">🏔️ 活動總覽</button>
+        <button class="hamburger-dropdown-item" onclick="window.showScheduleOverview()">📋 行程總覽</button>
+        <button class="hamburger-dropdown-item" onclick="window.showActivityOverview()">🧗 活動總覽</button>
         <button class="hamburger-dropdown-item" onclick="window.showWeatherOverview()">☁️ 天氣總覽</button>
         <button class="hamburger-dropdown-item" onclick="window.enableOfflineMode()">離線模式</button>
         <button class="hamburger-dropdown-item danger" onclick="window.clearAppCache()">清除快取</button>
@@ -655,12 +656,14 @@ async function init() {
     };
     
     // ─────────────────────────────────────────────────
-    // 3. Sticky Map Shrink（捲動時地圖縮小）
+    // 3. Sticky Map Shrink（捲動時地圖縮小）& Smart Nav Hide（滾動時隱藏導航）
     // ─────────────────────────────────────────────────
     (function setupMapShrink() {
         const THRESHOLD = 60;
         let ticking = false;
-    
+        let lastScrollTop = 0;
+        let navContainerHidden = false;
+
         function onScroll(scrollTop) {
             if (!ticking) {
                 requestAnimationFrame(() => {
@@ -680,6 +683,37 @@ async function init() {
                         updateMapToggleIcon();
                         // layout 改了才 invalidate，ResizeObserver 會接手 fitBounds
                     }
+
+                    // 智能隱藏/顯示 nav-container（mobile 模式）
+                    const navContainer = document.getElementById('nav-container');
+                    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+                    
+                    if (navContainer && isMobile) {
+                        const isScrollingDown = scrollTop > lastScrollTop;
+                        const isNearTop = scrollTop < 30;
+
+                        if (isNearTop && navContainerHidden) {
+                            // 回到頂部，顯示導航
+                            navContainer.style.opacity = '1';
+                            navContainer.style.visibility = 'visible';
+                            navContainer.style.maxHeight = '';
+                            navContainerHidden = false;
+                        } else if (isScrollingDown && scrollTop > THRESHOLD && !navContainerHidden) {
+                            // 向下滾動超過閾值，隱藏導航
+                            navContainer.style.opacity = '0';
+                            navContainer.style.visibility = 'hidden';
+                            navContainer.style.maxHeight = '0';
+                            navContainerHidden = true;
+                        } else if (!isScrollingDown && navContainerHidden && scrollTop < THRESHOLD) {
+                            // 向上滾動回到閾值以下，顯示導航
+                            navContainer.style.opacity = '1';
+                            navContainer.style.visibility = 'visible';
+                            navContainer.style.maxHeight = '';
+                            navContainerHidden = false;
+                        }
+                    }
+
+                    lastScrollTop = scrollTop;
                     ticking = false;
                 });
                 ticking = true;
@@ -982,6 +1016,87 @@ window.showAccommodationOverview = function(options = {}) {
     if (sidebar) sidebar.scrollTo({ top: 0, behavior: 'auto' });
 };
 
+window.showScheduleOverview = function(options = {}) {
+    if (isEditingMode) {
+        alert("請先儲存或取消編輯模式");
+        return;
+    }
+
+    currentViewMode = 'schedule';
+    const contentDiv = document.getElementById('itinerary-content');
+    const weatherDiv = document.getElementById('weather-display');
+    const hamburgerDropdown = document.getElementById('hamburger-dropdown');
+    if (weatherDiv) weatherDiv.style.display = 'none';
+    if (hamburgerDropdown) hamburgerDropdown.classList.remove('show');
+
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+
+    const scheduleItems = [];
+    itineraryData.forEach((day, dayIdx) => {
+        if (!day.schedule) return;
+        day.schedule.forEach((item) => {
+            scheduleItems.push({
+                ...item,
+                day: day.day,
+                date: day.date,
+                dayTitle: day.title,
+                dayColor: day.color
+            });
+        });
+    });
+
+    const cards = scheduleItems.map((item) => {
+        const point = item.mapKey && coords[item.mapKey] ? coords[item.mapKey] : null;
+        const mapUrl = point ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(point[0] + ',' + point[1])}` : '';
+        const mapName = item.mapKey ? (coordNames[item.mapKey] || item.text) : item.text;
+        const navBtn = point ? `<button class="link-btn nav-btn" type="button" data-nav-lat="${point[0]}" data-nav-lng="${point[1]}" data-nav-label="${mapName.replace(/"/g, '&quot;')}" onclick="window.openNavigationChooser(this.dataset.navLat, this.dataset.navLng, this.dataset.navLabel)">🧭 導航</button>` : '';
+
+        const typeIcon = {
+            'activity': '🧗',
+            'visit': '🏔️',
+            'food': '🍴',
+            'hotel': '🛏️',
+            'drive': '🚗'
+        }[item.type] || '📍';
+
+        return `
+            <div class="activity-card" style="background: var(--bg-card); padding: 14px; margin-bottom: 12px; border-radius: 10px; border-left: 4px solid ${item.dayColor};">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                    <div>
+                        <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 2px;">Day ${item.day} | ${item.date}</div>
+                        <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">${typeIcon} ${item.text}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">${item.dayTitle}</div>
+                    </div>
+                    <div style="text-align: right; font-size: 13px; font-weight: 700; color: ${item.dayColor};">${item.time}</div>
+                </div>
+                ${item.hours ? `<div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px;">🕒 ${item.hours}</div>` : ''}
+                ${item.drive ? `<div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">🚗 ${item.drive}</div>` : ''}
+                ${item.desc ? `<div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px;">${item.desc.replace(/\n/g, '<br>')}</div>` : ''}
+                ${point || item.link ? `<div class="links-row" style="margin-top: 0; border-top: none; padding-top: 0; gap: 8px;">
+                    ${point ? `<a class="link-btn map-view-btn" href="${mapUrl}" target="_blank" rel="noopener">📍 地圖查看</a>` : ''}
+                    ${navBtn}
+                    ${item.link ? `<a class="link-btn external-link-btn" href="${item.link}" target="_blank" rel="noopener">🔗 預訂</a>` : ''}
+                </div>` : ''}
+            </div>
+        `;
+    }).join('');
+
+    contentDiv.innerHTML = `
+        <div class="day-header" style="margin-bottom: 16px;">
+            <div style="font-size:12px; color:var(--text-tertiary);">行程總覽</div>
+            <h2 style="margin:5px 0 8px;">全程行程一覽</h2>
+            <div style="font-size:13px; color:var(--text-secondary);">瀏覽所有行程中的全部項目、景點、活動與用餐。</div>
+            <button class="btn-main" style="margin-top:12px; width:100%;" onclick="loadDay(${currentDayIndex})">返回當日行程</button>
+        </div>
+        <div style="display: grid; gap: 8px;">
+            ${cards}
+        </div>
+    `;
+
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) sidebar.scrollTo({ top: 0, behavior: 'auto' });
+};
+
 window.showActivityOverview = function(options = {}) {
     if (isEditingMode) {
         alert("請先儲存或取消編輯模式");
@@ -1001,7 +1116,7 @@ window.showActivityOverview = function(options = {}) {
     itineraryData.forEach((day, dayIdx) => {
         if (!day.schedule) return;
         day.schedule.forEach((item) => {
-            if (['activity', 'visit', 'food'].includes(item.type)) {
+            if (item.type === 'activity') {
                 activities.push({
                     ...item,
                     day: day.day,
@@ -1013,56 +1128,64 @@ window.showActivityOverview = function(options = {}) {
         });
     });
 
-    const cards = activities.map((activity) => {
-        const point = activity.mapKey && coords[activity.mapKey] ? coords[activity.mapKey] : null;
-        const mapUrl = point ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(point[0] + ',' + point[1])}` : '';
-        const mapName = activity.mapKey ? (coordNames[activity.mapKey] || activity.text) : activity.text;
-        const navBtn = point ? `<button class="link-btn nav-btn" type="button" data-nav-lat="${point[0]}" data-nav-lng="${point[1]}" data-nav-label="${mapName.replace(/"/g, '&quot;')}" onclick="window.openNavigationChooser(this.dataset.navLat, this.dataset.navLng, this.dataset.navLabel)">🧭 導航</button>` : '';
-
-        const typeIcon = {
-            'activity': '🧗',
-            'visit': '🏔️',
-            'food': '🍴'
-        }[activity.type] || '📍';
-
-        return `
-            <div class="activity-card" style="background: var(--bg-card); padding: 14px; margin-bottom: 12px; border-radius: 10px; border-left: 4px solid ${activity.dayColor};">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                    <div>
-                        <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 2px;">Day ${activity.day} | ${activity.date}</div>
-                        <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">${typeIcon} ${activity.text}</div>
-                        <div style="font-size: 12px; color: var(--text-secondary);">${activity.dayTitle}</div>
-                    </div>
-                    <div style="text-align: right; font-size: 13px; font-weight: 700; color: ${activity.dayColor};">${activity.time}</div>
-                </div>
-                ${activity.hours ? `<div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px;">🕒 ${activity.hours}</div>` : ''}
-                ${activity.desc ? `<div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px;">${activity.desc.replace(/\n/g, '<br>')}</div>` : ''}
-                ${point || activity.link ? `<div class="links-row" style="margin-top: 0; border-top: none; padding-top: 0; gap: 8px;">
-                    ${point ? `<a class="link-btn map-view-btn" href="${mapUrl}" target="_blank" rel="noopener">📍 地圖查看</a>` : ''}
-                    ${navBtn}
-                    ${activity.link ? `<a class="link-btn external-link-btn" href="${activity.link}" target="_blank" rel="noopener">🔗 預訂</a>` : ''}
-                </div>` : ''}
+    if (activities.length === 0) {
+        contentDiv.innerHTML = `
+            <div class="day-header" style="margin-bottom: 16px;">
+                <div style="font-size:12px; color:var(--text-tertiary);">活動總覽</div>
+                <h2 style="margin:5px 0 8px;">全程活動一覽</h2>
+                <button class="btn-main" style="margin-top:12px; width:100%;" onclick="loadDay(${currentDayIndex})">返回當日行程</button>
+            </div>
+            <div style="text-align: center; padding: 30px 20px; color: var(--text-secondary);">
+                <div style="font-size: 16px; margin-bottom: 10px;">📭 此行程中沒有活動項目</div>
+                <div style="font-size: 13px;">活動指的是冒險、戶外體驗等帶有 🧗 符號的項目。</div>
             </div>
         `;
-    }).join('');
+    } else {
+        const cards = activities.map((activity) => {
+            const point = activity.mapKey && coords[activity.mapKey] ? coords[activity.mapKey] : null;
+            const mapUrl = point ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(point[0] + ',' + point[1])}` : '';
+            const mapName = activity.mapKey ? (coordNames[activity.mapKey] || activity.text) : activity.text;
+            const navBtn = point ? `<button class="link-btn nav-btn" type="button" data-nav-lat="${point[0]}" data-nav-lng="${point[1]}" data-nav-label="${mapName.replace(/"/g, '&quot;')}" onclick="window.openNavigationChooser(this.dataset.navLat, this.dataset.navLng, this.dataset.navLabel)">🧭 導航</button>` : '';
 
-    contentDiv.innerHTML = `
-        <div class="day-header" style="margin-bottom: 16px;">
-            <div style="font-size:12px; color:var(--text-tertiary);">活動總覽</div>
-            <h2 style="margin:5px 0 8px;">全程活動與景點</h2>
-            <div style="font-size:13px; color:var(--text-secondary);">瀏覽所有行程中的景點、活動與用餐地點。</div>
-            <button class="btn-main" style="margin-top:12px; width:100%;" onclick="loadDay(${currentDayIndex})">返回當日行程</button>
-        </div>
-        <div style="display: grid; gap: 8px;">
-            ${cards}
-        </div>
-    `;
+            return `
+                <div class="activity-card" style="background: var(--bg-card); padding: 14px; margin-bottom: 12px; border-radius: 10px; border-left: 4px solid ${activity.dayColor};">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                        <div>
+                            <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 2px;">Day ${activity.day} | ${activity.date}</div>
+                            <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">🧗 ${activity.text}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">${activity.dayTitle}</div>
+                        </div>
+                        <div style="text-align: right; font-size: 13px; font-weight: 700; color: ${activity.dayColor};">${activity.time}</div>
+                    </div>
+                    ${activity.hours ? `<div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px;">🕒 ${activity.hours}</div>` : ''}
+                    ${activity.desc ? `<div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px;">${activity.desc.replace(/\n/g, '<br>')}</div>` : ''}
+                    ${point || activity.link ? `<div class="links-row" style="margin-top: 0; border-top: none; padding-top: 0; gap: 8px;">
+                        ${point ? `<a class="link-btn map-view-btn" href="${mapUrl}" target="_blank" rel="noopener">📍 地圖查看</a>` : ''}
+                        ${navBtn}
+                        ${activity.link ? `<a class="link-btn external-link-btn" href="${activity.link}" target="_blank" rel="noopener">🔗 預訂</a>` : ''}
+                    </div>` : ''}
+                </div>
+            `;
+        }).join('');
+
+        contentDiv.innerHTML = `
+            <div class="day-header" style="margin-bottom: 16px;">
+                <div style="font-size:12px; color:var(--text-tertiary);">活動總覽</div>
+                <h2 style="margin:5px 0 8px;">全程活動一覽</h2>
+                <div style="font-size:13px; color:var(--text-secondary);">共 ${activities.length} 個活動項目</div>
+                <button class="btn-main" style="margin-top:12px; width:100%;" onclick="loadDay(${currentDayIndex})">返回當日行程</button>
+            </div>
+            <div style="display: grid; gap: 8px;">
+                ${cards}
+            </div>
+        `;
+    }
 
     const sidebar = document.getElementById('sidebar');
     if (sidebar) sidebar.scrollTo({ top: 0, behavior: 'auto' });
 };
 
-window.showWeatherOverview = function(options = {}) {
+window.showWeatherOverview = async function(options = {}) {
     if (isEditingMode) {
         alert("請先儲存或取消編輯模式");
         return;
@@ -1077,70 +1200,156 @@ window.showWeatherOverview = function(options = {}) {
 
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
 
-    const weatherCards = itineraryData.map((day) => {
-        const stayKey = day.stayMapKey || '';
-        const point = stayKey && coords[stayKey] ? coords[stayKey] : null;
-        
-        if (!point) {
-            return `
-                <div class="weather-card" style="background: var(--bg-card); padding: 14px; margin-bottom: 12px; border-radius: 10px; opacity: 0.6;">
-                    <div style="font-size: 13px; color: var(--text-tertiary);">Day ${day.day} | ${day.date}</div>
-                    <div style="font-weight: 700; margin: 6px 0; color: var(--text-primary);">${day.stay || day.title}</div>
-                    <div style="color: var(--text-secondary);">⚠️ 未設定天氣座標</div>
-                </div>
-            `;
-        }
+    // 顯示載入中
+    contentDiv.innerHTML = `
+        <div class="day-header" style="margin-bottom: 16px;">
+            <div style="font-size:12px; color:var(--text-tertiary);">天氣總覽</div>
+            <h2 style="margin:5px 0 8px;">全程天氣預報</h2>
+            <button class="btn-main" style="margin-top:12px; width:100%;" onclick="loadDay(${currentDayIndex})">返回當日行程</button>
+        </div>
+        <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+            <div style="font-size: 20px; margin-bottom: 10px;">⏳</div>
+            <div style="font-size: 14px;">正在載入天氣數據...</div>
+        </div>
+    `;
 
+    // 收集所有需要 fetch 的天氣點
+    const weatherFetchJobs = [];
+    const weatherCache = {};
+
+    itineraryData.forEach((day) => {
+        const stayKey = day.stayMapKey;
+        const prevKey = day.prevStayMapKey;
         const dateParts = (day.date || '').split('/');
-        const travelDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
-        const cachedWeather = getCachedWeather(point[0], point[1], travelDate);
+        const travelDate = dateParts.length === 3 
+            ? `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`
+            : '';
 
-        if (cachedWeather) {
-            const w = cachedWeather;
-            const tempRange = w.temperatureMax && w.temperatureMin 
-                ? `${Math.round(w.temperatureMin)}°C ~ ${Math.round(w.temperatureMax)}°C`
-                : '溫度未知';
-            const conditions = w.weatherCodeDescription || w.shortForecast || '無天氣數據';
+        if (!travelDate) return;
 
+        // Fetch 當晚 stay 的天氣
+        if (stayKey && coords[stayKey]) {
+            const point = coords[stayKey];
+            const cacheKey = `${point[0]},${point[1]}:${travelDate}`;
+            if (!weatherCache[day.day]) weatherCache[day.day] = {};
+            weatherFetchJobs.push(
+                fetchWeatherData(point[0], point[1], travelDate)
+                    .then(w => { weatherCache[day.day].stay = w; })
+            );
+        }
+
+        // Fetch 前一晚的天氣（用於該天的起點）
+        if (prevKey && coords[prevKey]) {
+            const point = coords[prevKey];
+            const cacheKey = `${point[0]},${point[1]}:${travelDate}`;
+            if (!weatherCache[day.day]) weatherCache[day.day] = {};
+            weatherFetchJobs.push(
+                fetchWeatherData(point[0], point[1], travelDate)
+                    .then(w => { weatherCache[day.day].prev = w; })
+            );
+        }
+    });
+
+    // 等待所有 fetch 完成
+    if (weatherFetchJobs.length > 0) {
+        await Promise.all(weatherFetchJobs);
+    }
+
+    // 建立天氣卡片的輔助函數
+    const buildWeatherCardSmall = (locName, weather) => {
+        const style = getWeatherStyle(weather?.type);
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+
+        if (!weather || weather.isOutOfRange) {
             return `
-                <div class="weather-card" style="background: var(--bg-card); padding: 14px; margin-bottom: 12px; border-radius: 10px; border-left: 4px solid ${day.color || '#3498db'};">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                        <div>
-                            <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 2px;">Day ${day.day}</div>
-                            <div style="font-weight: 700; color: var(--text-primary);">${day.stay || day.title}</div>
-                            <div style="font-size: 12px; color: var(--text-secondary);">${day.date}</div>
-                        </div>
-                        <div style="text-align: right; font-size: 24px;">🌡️</div>
+                <div style="
+                    flex:1;
+                    background: var(--bg-input);
+                    border-radius: 12px;
+                    padding: 12px;
+                    text-align: center;
+                    color: var(--text-secondary);
+                    border: 1px solid var(--border-light);
+                    min-width: 0;
+                ">
+                    <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${locName}">
+                        ${locName}
                     </div>
-                    <div style="background: rgba(52,152,219,0.1); padding: 8px 10px; border-radius: 6px; margin: 8px 0;">
-                        <div style="font-size: 13px; font-weight: 700; color: #2479b5;">溫度: ${tempRange}</div>
-                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">狀況: ${conditions}</div>
-                        ${w.humidity ? `<div style="font-size: 12px; color: var(--text-secondary);">濕度: ${w.humidity}%</div>` : ''}
-                        ${w.windSpeed ? `<div style="font-size: 12px; color: var(--text-secondary);">風速: ${Math.round(w.windSpeed)} km/h</div>` : ''}
-                    </div>
-                    ${w.detailedForecast ? `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-top: 8px;">${w.detailedForecast}</div>` : ''}
-                </div>
-            `;
-        } else {
-            return `
-                <div class="weather-card" style="background: var(--bg-card); padding: 14px; margin-bottom: 12px; border-radius: 10px;">
-                    <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 2px;">Day ${day.day}</div>
-                    <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">${day.stay || day.title}</div>
-                    <div style="font-size: 13px; color: var(--text-secondary);">⏳ 天氣數據正在載入...</div>
+                    <div style="font-size: 12px;">❓ 暫無資料</div>
                 </div>
             `;
         }
+
+        const textColor = weather?.type === "storm" ? (isDarkMode ? "#e0e0e0" : "#fff") : (isDarkMode ? "#e0e0e0" : "#111");
+        const boxBg = weather?.type === "storm"
+            ? (isDarkMode ? "rgba(100,100,100,0.2)" : "rgba(255,255,255,0.1)")
+            : (isDarkMode ? "rgba(100,100,100,0.2)" : "rgba(255,255,255,0.4)");
+
+        return `
+            <div style="
+                flex: 1;
+                background: ${style.bg};
+                border-radius: 12px;
+                padding: 12px;
+                text-align: center;
+                color: ${textColor};
+                border: 1px solid ${style.border};
+                min-width: 0;
+            ">
+                <div style="font-size: 13px; font-weight: 700; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${locName}">
+                    ${locName}
+                </div>
+                <div style="font-size: 22px; margin-bottom: 6px;">
+                    ${weather.icon}
+                </div>
+                <div style="font-size: 11px; font-weight: 600; margin-bottom: 8px; opacity: 0.9;">
+                    ${weather.weather}
+                </div>
+                <div style="display: flex; gap: 4px; font-size: 10px;">
+                    <div style="flex: 1; background: ${boxBg}; border-radius: 8px; padding: 3px;">
+                        <div style="opacity: 0.7;">早</div>
+                        <div style="font-weight: 700;">${weather.tempAM}</div>
+                    </div>
+                    <div style="flex: 1; background: ${boxBg}; border-radius: 8px; padding: 3px;">
+                        <div style="opacity: 0.7;">午</div>
+                        <div style="font-weight: 700;">${weather.tempPM}</div>
+                    </div>
+                    <div style="flex: 1; background: ${boxBg}; border-radius: 8px; padding: 3px;">
+                        <div style="opacity: 0.7;">晚</div>
+                        <div style="font-weight: 700;">${weather.tempNight}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+
+    // 建立每日卡片
+    const dayCards = itineraryData.map((day) => {
+        const dayWeather = weatherCache[day.day] || {};
+        const prevLocName = day.prevStay || '起點';
+        const stayLocName = day.stay || '終點';
+
+        return `
+            <div style="background: var(--bg-card); padding: 16px; margin-bottom: 12px; border-radius: 12px; border-left: 4px solid ${day.color};">
+                <div style="font-size: 13px; color: var(--text-tertiary); margin-bottom: 2px; font-weight: 700;">Day ${day.day}</div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${day.date} - ${day.title}</div>
+                <div style="display: flex; gap: 10px;">
+                    ${buildWeatherCardSmall(prevLocName, dayWeather.prev)}
+                    ${buildWeatherCardSmall(stayLocName, dayWeather.stay)}
+                </div>
+            </div>
+        `;
     }).join('');
 
     contentDiv.innerHTML = `
         <div class="day-header" style="margin-bottom: 16px;">
             <div style="font-size:12px; color:var(--text-tertiary);">天氣總覽</div>
             <h2 style="margin:5px 0 8px;">全程天氣預報</h2>
-            <div style="font-size:13px; color:var(--text-secondary);">根據各宿點位置的天氣預報。</div>
+            <div style="font-size:13px; color:var(--text-secondary);">根據各日出發點與目的地的天氣預報。</div>
             <button class="btn-main" style="margin-top:12px; width:100%;" onclick="loadDay(${currentDayIndex})">返回當日行程</button>
         </div>
         <div style="display: grid; gap: 8px;">
-            ${weatherCards}
+            ${dayCards}
         </div>
     `;
 

@@ -246,6 +246,11 @@ body {
   opacity: .8;
 }
 
+/* Nav Container */
+#nav-container {
+  transition: opacity 0.3s ease, visibility 0.3s ease, max-height 0.3s ease;
+}
+
 /* Nav */
 .nav-buttons {
   display: flex;
@@ -657,21 +662,52 @@ body.map-fullscreen.map-shrunk #map-container {
 .accommodation-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 12px;
+  gap: 10px;
   margin-top: 12px;
   padding-top: 10px;
   border-top: 1px dashed var(--border-color);
-  font-size: 12px;
 }
 
-.accommodation-actions a {
-  color: #3498db;
-  text-decoration: none;
+.accommodation-actions .link-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--tap-min);
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 14px;
   font-weight: 700;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+.accommodation-actions .link-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+}
+.accommodation-actions .link-btn:active {
+  transform: translateY(0);
+}
+.accommodation-actions .map-view-btn {
+  background: rgba(52,152,219,0.12);
+  color: #2479b5;
+  border-color: rgba(52,152,219,0.28);
+}
+.accommodation-actions .nav-btn {
+  background: rgba(46,204,113,0.14);
+  color: #239a58;
+  border-color: rgba(46,204,113,0.28);
+}
+.accommodation-actions .external-link-btn {
+  background: rgba(230,126,34,0.14);
+  color: #ca6f1e;
+  border-color: rgba(230,126,34,0.28);
 }
 
 .accommodation-actions span {
   color: var(--text-tertiary);
+  font-size: 13px;
 }
 
 html[data-theme="dark"] .accommodation-night {
