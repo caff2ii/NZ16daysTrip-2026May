@@ -656,14 +656,12 @@ async function init() {
     };
     
     // ─────────────────────────────────────────────────
-    // 3. Sticky Map Shrink（捲動時地圖縮小）& Smart Nav Hide（滾動時隱藏導航）
+    // 3. Sticky Map Shrink（捲動時地圖縮小）
     // ─────────────────────────────────────────────────
     (function setupMapShrink() {
         const THRESHOLD = 60;
         let ticking = false;
-        let lastScrollTop = 0;
-        let navContainerHidden = false;
-
+    
         function onScroll(scrollTop) {
             if (!ticking) {
                 requestAnimationFrame(() => {
@@ -683,37 +681,6 @@ async function init() {
                         updateMapToggleIcon();
                         // layout 改了才 invalidate，ResizeObserver 會接手 fitBounds
                     }
-
-                    // 智能隱藏/顯示 nav-container（mobile 模式）
-                    const navContainer = document.getElementById('nav-container');
-                    const isMobile = window.matchMedia('(max-width: 768px)').matches;
-                    
-                    if (navContainer && isMobile) {
-                        const isScrollingDown = scrollTop > lastScrollTop;
-                        const isNearTop = scrollTop < 30;
-
-                        if (isNearTop && navContainerHidden) {
-                            // 回到頂部，顯示導航
-                            navContainer.style.opacity = '1';
-                            navContainer.style.visibility = 'visible';
-                            navContainer.style.maxHeight = '';
-                            navContainerHidden = false;
-                        } else if (isScrollingDown && scrollTop > THRESHOLD && !navContainerHidden) {
-                            // 向下滾動超過閾值，隱藏導航
-                            navContainer.style.opacity = '0';
-                            navContainer.style.visibility = 'hidden';
-                            navContainer.style.maxHeight = '0';
-                            navContainerHidden = true;
-                        } else if (!isScrollingDown && navContainerHidden && scrollTop < THRESHOLD) {
-                            // 向上滾動回到閾值以下，顯示導航
-                            navContainer.style.opacity = '1';
-                            navContainer.style.visibility = 'visible';
-                            navContainer.style.maxHeight = '';
-                            navContainerHidden = false;
-                        }
-                    }
-
-                    lastScrollTop = scrollTop;
                     ticking = false;
                 });
                 ticking = true;

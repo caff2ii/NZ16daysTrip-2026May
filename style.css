@@ -246,11 +246,6 @@ body {
   opacity: .8;
 }
 
-/* Nav Container */
-#nav-container {
-  transition: opacity 0.3s ease, visibility 0.3s ease, max-height 0.3s ease;
-}
-
 /* Nav */
 .nav-buttons {
   display: flex;
