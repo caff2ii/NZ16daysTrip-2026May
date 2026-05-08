@@ -916,7 +916,7 @@ function renderViewMode() {
                 <div class="links-row" style="margin-top: 12px; border-top: 1px dashed ${isDarkMode ? '#444' : '#eee'}; padding-top: 8px;">
                     ${point ? `<a class="link-btn map-view-btn" href="${mapUrl}" target="_blank" rel="noopener">📍 地圖查看</a>` : `<span>未設定地圖座標</span>`}
                     ${navButton}
-                    ${item.link ? `<a class="link-btn external-link-btn" href="${item.link}" target="_blank" rel="noopener">🔗 相關連結 / 預訂</a>` : ''}
+                    ${item.link ? `<a class="link-btn external-link-btn" href="${item.link}" target="_blank" rel="noopener">🔗 預訂連結</a>` : ''}
                 </div>
             </div>
         `;
