@@ -661,8 +661,12 @@ async function init() {
     (function setupMapShrink() {
         const THRESHOLD = 60;
         let ticking = false;
-    
+        window.__ignoreProgrammaticScrollUntil = 0;
+
         function onScroll(scrollTop) {
+            if (Date.now() < window.__ignoreProgrammaticScrollUntil) {
+                return;
+            }
             if (!ticking) {
                 requestAnimationFrame(() => {
                     if (
@@ -686,6 +690,10 @@ async function init() {
                 ticking = true;
             }
         }
+
+        window.ignoreProgrammaticScroll = function(duration = 400) {
+            window.__ignoreProgrammaticScrollUntil = Date.now() + duration;
+        };
     
         // 手機：sidebar 獨立 scroll
         const sidebar = document.getElementById('sidebar');
@@ -767,6 +775,10 @@ function loadDay(index) {
 
     // 2.5 轉 Day 後自動跳返最上面（sidebar 為主要 scroll container）
     const sidebar = document.getElementById('sidebar');
+    const preserveShrunk = document.body.classList.contains('map-shrunk');
+    if (preserveShrunk && typeof window.ignoreProgrammaticScroll === 'function') {
+        window.ignoreProgrammaticScroll(500);
+    }
     if (sidebar) {
         sidebar.scrollTo({ top: 0, behavior: 'auto' });
         // 保險：等 DOM repaint 後再設一次，避免部分手機瀏覽器 miss
@@ -774,6 +786,14 @@ function loadDay(index) {
     } else {
         window.scrollTo({ top: 0, behavior: 'auto' });
         requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'auto' }));
+    }
+    if (preserveShrunk) {
+        setTimeout(() => {
+            if (!document.body.classList.contains('map-shrunk')) {
+                document.body.classList.add('map-shrunk');
+                updateMapToggleIcon();
+            }
+        }, 100);
     }
     
     // 3. 獲取當天資料
