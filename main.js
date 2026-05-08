@@ -865,7 +865,7 @@ function renderViewMode() {
         const pointLng = point ? point[1] : null;
         const mapLabel = point ? (coordNames[item.mapKey] || item.text || item.mapKey) : '';
         const mapUrl = point ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pointLat + ',' + pointLng)}` : '';
-        const navButton = point ? `<button class="link-btn nav-btn" type="button" onclick="window.openNavigationChooser(${pointLat}, ${pointLng}, ${JSON.stringify(mapLabel)})">🧭 導航</button>` : '';
+        const navButton = point ? `<button class="link-btn nav-btn" type="button" data-nav-lat="${pointLat}" data-nav-lng="${pointLng}" data-nav-label="${mapLabel.replace(/"/g, '&quot;')}" onclick="window.openNavigationChooser(this.dataset.navLat, this.dataset.navLng, this.dataset.navLabel)">🧭 導航</button>` : '';
         html += `
             <div class="timeline-item ${typeClass}${mapFocusClass}"${mapKeyAttrs}>
                 <div class="item-header" style="display: flex; align-items: center; justify-content: space-between;">
@@ -941,7 +941,7 @@ window.showAccommodationOverview = function(options = {}) {
         const mapUrl = point
             ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(point[0] + ',' + point[1])}`
             : '';
-        const navBtn = point ? `<button class="link-btn nav-btn" type="button" onclick="window.openNavigationChooser(${point[0]}, ${point[1]}, ${JSON.stringify(mapName)})">🧭 導航</button>` : '';
+        const navBtn = point ? `<button class="link-btn nav-btn" type="button" data-nav-lat="${point[0]}" data-nav-lng="${point[1]}" data-nav-label="${mapName.replace(/"/g, '&quot;')}" onclick="window.openNavigationChooser(this.dataset.navLat, this.dataset.navLng, this.dataset.navLabel)">🧭 導航</button>` : '';
 
         return `
             <div class="accommodation-card${mapClass}"${mapAttrs}>
